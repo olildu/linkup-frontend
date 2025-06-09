@@ -114,7 +114,6 @@ class _AroundYouPageState extends State<AroundYouPage> {
   }
 
   Widget _buildMessage({
-    String? imagePath,
     IconData? icon,
     required String title,
     required String subtitle,
