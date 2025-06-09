@@ -1,0 +1,62 @@
+class Message {
+  final int? id;
+  final String message;  
+  final int to;
+  final DateTime timestamp;
+  final int from_;
+  final int chatRoomId; 
+  final bool isSeen;
+
+  Message({
+    required this.message,
+    required this.to,
+    required this.timestamp,
+    required this.from_,
+    required this.chatRoomId,
+    this.id = -1,
+    this.isSeen = false,
+  });
+
+  Message copyWith({
+    int? id,
+    String? message,
+    int? to,
+    int? from_,
+    DateTime? timestamp,
+    int? chatRoomId,
+    bool? isSeen,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      message: message ?? this.message,
+      to: to ?? this.to,
+      from_: from_ ?? this.from_,
+      timestamp: timestamp ?? this.timestamp,
+      chatRoomId: chatRoomId ?? this.chatRoomId,
+      isSeen: isSeen ?? this.isSeen,
+    );
+  }
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(
+      id: (json['message_id'] ?? -1) as int,
+      message: json['message'] as String,
+      to: json['to'] as int,
+      from_: json['from_'] as int,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      chatRoomId: json['chat_room_id'] as int,
+      isSeen: (json['is_seen'] ?? false) as bool,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "type" : "chats",
+      "chats_type" : "message",
+      'message': message,
+      'to': to,
+      'from_': from_,
+      'chat_room_id': chatRoomId,
+    };
+  }
+}

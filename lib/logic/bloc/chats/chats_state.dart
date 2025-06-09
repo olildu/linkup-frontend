@@ -1,0 +1,40 @@
+part of 'chats_bloc.dart';
+
+@immutable
+sealed class ChatsState {}
+
+final class ChatsInitial extends ChatsState {}
+
+final class ChatsLoading extends ChatsState {}
+
+final class ChatsLoaded extends ChatsState {
+  final List<Message> messages;
+  final bool isTyping;
+  final bool otherUserSeenMsg;
+  final int? typingUserId;
+
+  ChatsLoaded({
+    required this.messages,
+    this.isTyping = false,
+    this.otherUserSeenMsg = false,
+    this.typingUserId,
+  });
+
+  ChatsLoaded copyWith({
+    List<Message>? messages,
+    bool? isTyping,
+    bool? otherUserSeenMsg,
+    int? typingUserId,
+  }) {
+    return ChatsLoaded(
+      messages: messages ?? this.messages,
+      isTyping: isTyping ?? this.isTyping,
+      otherUserSeenMsg: otherUserSeenMsg ?? this.otherUserSeenMsg,
+      typingUserId: typingUserId ?? this.typingUserId,
+    );
+  }
+}
+
+final class ChatsError extends ChatsState {}
+
+final class ChatsEmpty extends ChatsState {}
