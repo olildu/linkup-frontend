@@ -13,10 +13,7 @@ class TextFieldBuilder extends StatefulWidget {
     super.key,
     required this.hintText,
     this.maxLines = 5,
-    this.border = const OutlineInputBorder(
-      borderRadius: BorderRadius.all(Radius.circular(10)),
-      borderSide: BorderSide(color: Colors.grey),
-    ),
+    this.border = const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
     this.initialValue = '',
     this.onChanged,
   });
@@ -26,22 +23,30 @@ class TextFieldBuilder extends StatefulWidget {
 }
 
 class _TextFieldBuilderState extends State<TextFieldBuilder> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: TextEditingController(text: widget.initialValue),
+      controller: _controller,
       maxLines: widget.maxLines,
       onChanged: widget.onChanged,
-      style: GoogleFonts.poppins(
-        fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
+      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: widget.hintText,
-        hintStyle: TextStyle(
-          fontSize: 14.sp,
-          color: Colors.grey,
-        ),
+        hintStyle: TextStyle(fontSize: 14.sp, color: Colors.grey),
         border: widget.border,
         focusedBorder: widget.border,
         enabledBorder: widget.border,

@@ -14,28 +14,17 @@ class CandidateDetailBuilder extends StatelessWidget {
   final double availableHeight;
   final MatchCandidateModel candidate;
 
-  const CandidateDetailBuilder({
-    super.key,
-    required this.availableHeight,
-    required this.candidate,
-  });
-
-
+  const CandidateDetailBuilder({super.key, required this.availableHeight, required this.candidate});
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     final MatchCandidateModel localCandidate = candidate;
     final candidateInformation = CandidateInfoModel.fromMatchCandidate(localCandidate);
 
     List<String> imageRest = localCandidate.photos.sublist(1);
 
     void showFullScreenImage(String imagePath) {
-      Navigator.push(
-        context,
-        CupertinoPageRoute(
-          builder: (context) => FullScreenImageScreen(imagePath: imagePath),
-        ),
-      );
+      Navigator.push(context, CupertinoPageRoute(builder: (context) => FullScreenImageScreen(imagePath: imagePath)));
     }
 
     return Column(
@@ -53,7 +42,7 @@ class CandidateDetailBuilder extends StatelessWidget {
                     showFullScreenImage(imagePath);
                   },
                 );
-              }
+              },
             ),
 
             Positioned(
@@ -66,9 +55,7 @@ class CandidateDetailBuilder extends StatelessWidget {
                   width: MediaQuery.sizeOf(context).width - 20.w,
                   padding: EdgeInsets.symmetric(horizontal: 16.0.w, vertical: 16.0.h),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? Color.fromARGB(255, 210, 208, 208)
-                        : Color.fromARGB(255, 31, 29, 29),
+                    color: Theme.of(context).brightness == Brightness.light ? Color.fromARGB(255, 210, 208, 208) : Color.fromARGB(255, 31, 29, 29),
                     borderRadius: BorderRadius.circular(20.0.r),
                   ),
                   child: Column(
@@ -77,54 +64,36 @@ class CandidateDetailBuilder extends StatelessWidget {
                     children: [
                       Text(
                         '${localCandidate.username}, ${calculateAge(localCandidate.dob)}',
-                        style: TextStyle(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                        style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                       ),
-              
+
                       Gap(4.h),
-              
+
                       Row(
                         children: [
-                          Icon(
-                            Icons.school,
-                            size: 16.sp,
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                          ),
-              
+                          Icon(Icons.school, size: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+
                           Gap(6.w),
-              
+
                           Text(
                             '${localCandidate.universityMajor} Student',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                            ),
+                            style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                           ),
                         ],
                       ),
                       Gap(4.h),
                       Row(
                         children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16.sp,
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                          ),
-                          
+                          Icon(Icons.calendar_today, size: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+
                           Gap(6.w),
-              
+
                           Text(
                             '${getOrdinalSuffix(localCandidate.universityYear)} Year',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                            ),  
+                            style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -132,126 +101,88 @@ class CandidateDetailBuilder extends StatelessWidget {
             ),
           ],
         ),
-    
-        Gap(5.h), 
-    
+
+        Gap(5.h),
+
         // About section card
         Container(
           width: MediaQuery.sizeOf(context).width,
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20.r),
-          ),
+          decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20.r)),
           padding: EdgeInsets.symmetric(horizontal: 16.0.w, vertical: 16.0.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, 
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'About',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
+              Text('About', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
               Gap(12.h),
               Text(
                 localCandidate.about,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  height: 1.5,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-                ),
+                style: TextStyle(fontSize: 14.sp, height: 1.5, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8)),
               ),
               Gap(20.h),
               Text(
                 "${localCandidate.username}'s Info",
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
               ),
               Gap(12.h),
 
               Wrap(
                 spacing: 8.0.w,
                 runSpacing: 8.0.h,
-                children: candidateInformation.asIconMap().entries
-                  .where((entry) => entry.value['value'] != null) 
-                  .map((entry) {
-                    final icon = entry.value['icon'] as IconData;
-                    final text = entry.value['value'] as String;
-                    return InfoBuilder(text: text, icon: icon);
-                  }).toList(),
+                children:
+                    candidateInformation.asIconMap(showLocationInfo: false).entries.where((entry) => entry.value['value'] != null).map((entry) {
+                      final icon = entry.value['icon'] as IconData;
+                      final text = entry.value['value'] as String;
+                      return InfoBuilder(text: text, icon: icon);
+                    }).toList(),
               ),
-
             ],
           ),
         ),
-    
-        Gap(5.h), 
-        
+
+        Gap(5.h),
+
         SizedBox(
           height: availableHeight * 0.8 * imageRest.length + 10,
           child: ListView.builder(
-            physics: NeverScrollableScrollPhysics(), 
+            physics: NeverScrollableScrollPhysics(),
             itemCount: imageRest.length,
             itemBuilder: (context, index) {
               return Column(
                 children: [
-                  ImageBuilder(
-                    imagePath: imageRest[index],
-                    height: availableHeight * 0.8,
-                    onTap: () => showFullScreenImage(imageRest[index]),
-                  ),
-                  Gap(5.h), 
+                  ImageBuilder(imagePath: imageRest[index], height: availableHeight * 0.8, onTap: () => showFullScreenImage(imageRest[index])),
+                  Gap(5.h),
                 ],
               );
             },
           ),
         ),
 
-        Gap(5.h), 
-    
+        Gap(5.h),
+
         // Location information card
         Container(
           width: MediaQuery.sizeOf(context).width,
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16.0.r),
-          ),
+          decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16.0.r)),
           padding: EdgeInsets.symmetric(horizontal: 16.0.w, vertical: 16.0.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, 
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '${localCandidate.username} lives in',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
+                style: TextStyle(fontSize: 14.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               ),
               Gap(4.h),
               Text(
                 localCandidate.currentlyStaying,
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
               ),
               Gap(12.h),
-              InfoBuilder(
-                text: localCandidate.hometown,
-                icon: Icons.location_on,
-              ),
+              InfoBuilder(text: localCandidate.hometown, icon: Icons.location_on),
             ],
           ),
         ),
-    
       ],
     );
   }

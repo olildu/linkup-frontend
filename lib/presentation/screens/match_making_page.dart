@@ -1,10 +1,9 @@
-import 'dart:developer';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/logic/bloc/lobby/lobby_bloc.dart';
 import 'package:linkup/logic/bloc/matches/matches_bloc.dart';
 import 'package:linkup/logic/bloc/profile/own/preferences_bloc/preferences_bloc.dart';
 import 'package:linkup/presentation/constants/colors.dart';
@@ -22,8 +21,7 @@ class MatchMakingPage extends StatefulWidget {
   State<MatchMakingPage> createState() => _MatchMakingPageState();
 }
 
-class _MatchMakingPageState extends State<MatchMakingPage>
-    with SingleTickerProviderStateMixin {
+class _MatchMakingPageState extends State<MatchMakingPage> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return BlocListener<MatchesBloc, MatchesState>(
@@ -31,11 +29,7 @@ class _MatchMakingPageState extends State<MatchMakingPage>
         if (state is MatchesLoaded && state.matchUser != null) {
           final matchUser = state.matchUser!;
 
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MatchedPage(matchUser: matchUser),
-            ),
-          );
+          await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MatchedPage(matchUser: matchUser)));
         }
       },
       child: Scaffold(
@@ -57,12 +51,7 @@ class _MatchMakingPageState extends State<MatchMakingPage>
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.only(
-                left: 10.w,
-                right: 10.w,
-                top: 30.h,
-                bottom: 10.h,
-              ),
+              padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 30.h, bottom: 10.h),
 
               child: Column(
                 children: [
@@ -76,57 +65,36 @@ class _MatchMakingPageState extends State<MatchMakingPage>
                             onPressed: () {
                               Navigator.of(context).push(
                                 CupertinoPageRoute(
-                                  builder: (context) => BlocProvider(
-                                    create: (context) => PreferencesBloc()..add(PreferencesLoadEvent()),
-                                    child: SetPreferencesPage(),
-                                  ),
+                                  builder:
+                                      (context) => BlocProvider(
+                                        create: (context) => PreferencesBloc()..add(PreferencesLoadEvent()),
+                                        child: SetPreferencesPage(),
+                                      ),
                                 ),
                               );
                             },
                           ),
 
-                          IconButton(
-                            icon: Icon(Icons.flash_on_rounded, size: 28.sp),
-                            onPressed: () {},
-                          ),
+                          IconButton(icon: Icon(Icons.flash_on_rounded, size: 28.sp), onPressed: () {}),
                         ],
                       ),
 
-                      Text(
-                        'linkup',
-                        style: TextStyle(
-                          fontSize: 30.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
+                      Text('linkup', style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
 
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: Icon(
-                              Icons.favorite_rounded,
-                              color: AppColors.primary,
-                              size: 28.sp,
-                            ),
+                            icon: Icon(Icons.favorite_rounded, color: AppColors.primary, size: 28.sp),
                             onPressed: () {
-                              Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (context) => const ConnectionsPage(),
-                                ),
-                              );
+                              Navigator.of(context).push(CupertinoPageRoute(builder: (context) => const ConnectionsPage()));
                             },
                           ),
 
                           IconButton(
                             icon: Icon(Icons.person_rounded, size: 28.sp),
                             onPressed: () {
-                              Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (context) => ProfileSettingsPage(),
-                                ),
-                              );
+                              Navigator.of(context).push(CupertinoPageRoute(builder: (context) => ProfileSettingsPage()));
                             },
                           ),
                         ],
@@ -145,28 +113,15 @@ class _MatchMakingPageState extends State<MatchMakingPage>
                             width: MediaQuery.of(context).size.width - 160.w,
                             child: TabBar(
                               dividerColor: Colors.transparent,
-                              labelColor:
-                                  Theme.of(context).colorScheme.onSurface,
-                              unselectedLabelColor:
-                                  Theme.of(context).colorScheme.onSurface,
-                              overlayColor: WidgetStateProperty.all(
-                                Colors.transparent,
-                              ),
+                              labelColor: Theme.of(context).colorScheme.onSurface,
+                              unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+                              overlayColor: WidgetStateProperty.all(Colors.transparent),
                               indicator: UnderlineTabIndicator(
-                                borderSide: BorderSide(
-                                  width: 3.0.w,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                ),
-                                insets: EdgeInsets.symmetric(
-                                  horizontal: 30.0.w,
-                                ),
+                                borderSide: BorderSide(width: 3.0.w, color: Theme.of(context).colorScheme.onSurface),
+                                insets: EdgeInsets.symmetric(horizontal: 30.0.w),
                               ),
                               physics: const NeverScrollableScrollPhysics(),
-                              tabs: const [
-                                Tab(text: 'Around You'),
-                                Tab(text: 'meet@8'),
-                              ],
+                              tabs: const [Tab(text: 'Around You'), Tab(text: 'meet@8')],
                             ),
                           ),
                           Gap(20.h),
@@ -175,7 +130,7 @@ class _MatchMakingPageState extends State<MatchMakingPage>
                               physics: NeverScrollableScrollPhysics(),
                               children: [
                                 Center(child: AroundYouPage()),
-                                Center(child: MeetAt8Page()),
+                                Center(child: BlocProvider(create: (context) => LobbyBloc(), child: MeetAt8Page())),
                               ],
                             ),
                           ),

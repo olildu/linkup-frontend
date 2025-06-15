@@ -82,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
 
-    _emailController.value = const TextEditingValue(text: 'user@example.com');
+    _emailController.value = const TextEditingValue(text: 'user2@example.com');
     _passwordController.value = const TextEditingValue(text: 'StrongP@sswOrd123!');
 
     validateEmailPassword();

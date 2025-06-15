@@ -23,7 +23,7 @@ class ChatSocketServices {
 
   static Timer? _reconnectionTimer;
   static int _reconnectAttempts = 0;
-  static const Duration _fixedReconnectDelay = Duration(seconds: 5); 
+  static const Duration _fixedReconnectDelay = Duration(seconds: 5);
 
   static bool _isManuallyDisconnected = false;
   static bool _isConnecting = false;
@@ -64,15 +64,12 @@ class ChatSocketServices {
     try {
       _channel = IOWebSocketChannel.connect(
         uri,
-        headers: {
-          'Authorization': 'Bearer $_currentToken',
-        },
+        headers: {'Authorization': 'Bearer $_currentToken'},
         pingInterval: const Duration(seconds: 1),
-        connectTimeout: const Duration(seconds: 5)
+        connectTimeout: const Duration(seconds: 5),
       );
 
       _isConnecting = false;
-      log("WebSocket connection initiated. Listening for events...");
 
       _channel!.stream.listen(
         (data) {

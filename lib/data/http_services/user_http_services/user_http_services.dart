@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkup/data/models/match_candidate_model.dart';
+import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/data/models/user_model.dart';
 import 'package:linkup/data/models/user_preference_model.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
@@ -99,5 +100,33 @@ class UserHttpServices {
       throw Exception('Failed to fetch matches. Status: ${response.statusCode} Server-Response: ${response.body}');
     }
   }
+
+  Future<void> updateUserProfile({
+    required UpdateMetadataModel userUpdatedModel,
+  }) async {
+    final secureStorage = FlutterSecureStorage();
+    final accessToken = await secureStorage.read(key: 'access_token');
+
+    var body = userUpdatedModel.toJson();
+
+    final response = await http.post(
+      Uri.parse("$BASE_URL/user/update/metadata"),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      log('User preferences updated successfully: $jsonData');
+    } 
+    else {
+    log('Error: ${response.statusCode}');
+      throw Exception('Failed to fetch matches. Status: ${response.statusCode} Server-Response: ${response.body}');
+    }
+  }
+
 
 }

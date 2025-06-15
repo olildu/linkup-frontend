@@ -27,10 +27,7 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2));
 
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
 
@@ -58,10 +55,7 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => page,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
         transitionDuration: const Duration(milliseconds: 500),
       ),
@@ -72,16 +66,15 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
   void _tryNavigate() {
     if (!tokenCheckDone) return;
 
-  if (loggedIn) {
-    if (animationCompleted && loadingComplete) {
-      _navigateWithFade(const MatchMakingPage());
+    if (loggedIn) {
+      if (animationCompleted && loadingComplete) {
+        _navigateWithFade(const MatchMakingPage());
+      }
+    } else {
+      if (animationCompleted) {
+        _navigateWithFade(const LandingPage());
+      }
     }
-  } else {
-    if (animationCompleted) {
-      _navigateWithFade(const LandingPage());
-    }
-  }
-
   }
 
   @override
@@ -104,13 +97,7 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
             height: size,
             child: FadeTransition(
               opacity: _animation,
-              child: CustomPaint(
-                size: Size(size, size),
-                painter: DrawingPainter(
-                  _animation,
-                  isDarkMode ? Colors.black : Colors.white,
-                ),
-              ),
+              child: CustomPaint(size: Size(size, size), painter: DrawingPainter(_animation, isDarkMode ? Colors.black : Colors.white)),
             ),
           ),
         ),

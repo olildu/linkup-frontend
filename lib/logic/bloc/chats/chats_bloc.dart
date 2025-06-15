@@ -17,44 +17,40 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   final int chatRoomId;
 
   StreamSubscription<String>? _socketSubscription;
-  
+
+  Timer? _typingKillTimer;
   Timer? _typingTimer;
-  
-  ChatsBloc({
-    required this.currentChatUserId,
-    required this.currentUserId,
-    required this.chatRoomId,
-  }) : super(ChatsInitial()) {
+  bool _typingTimerActive = false;
+
+  ChatsBloc({required this.currentChatUserId, required this.currentUserId, required this.chatRoomId}) : super(ChatsInitial()) {
     on<StartChatsEvent>((event, emit) async {
       emit(ChatsLoading());
 
       try {
-      _socketSubscription?.cancel();
-      _socketSubscription = ChatSocketServices.messageStream.listen((raw) {
-        final data = jsonDecode(raw);
+        _socketSubscription?.cancel();
+        _socketSubscription = ChatSocketServices.messageStream.listen((raw) {
+          final data = jsonDecode(raw);
 
-        if (data["type"] == "chats") {
-          if (data["chats_type"] == "message") {
-            add(NewMessageEvent(data));
-          } else if (data["chats_type"] == "typing") {
-            add(TypingEvent(data));
-          } else if (data["chats_type"] == "seen") {
-            add(SeenEvent(data));
+          if (data["type"] == "chats") {
+            if (data["chats_type"] == "message") {
+              add(NewMessageEvent(data));
+            } else if (data["chats_type"] == "typing") {
+              add(TypingEvent(data));
+            } else if (data["chats_type"] == "seen") {
+              add(SeenEvent(data));
+            }
           }
-        }
-      });
+        });
 
-      final messages = await ChatHttpServices().fetchChatMessages(
-        chatRoomId: chatRoomId
-      );
+        final messages = await ChatHttpServices().fetchChatMessages(chatRoomId: chatRoomId);
 
-      emit(ChatsLoaded(messages: messages));
+        emit(ChatsLoaded(messages: messages));
       } catch (e) {
         log("Error starting chat socket: $e");
         emit(ChatsError());
       }
     });
- 
+
     on<SendMessageEvent>((event, emit) {
       final message = event.message;
       final currentState = state;
@@ -62,11 +58,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       if (currentState is ChatsLoaded) {
         final updatedMessages = List<Message>.from(currentState.messages)..add(message);
 
-        log(message.toJson().toString());
-
-        ChatSocketServices.sendMessage(
-          messageBody: message.toJson()
-        );
+        ChatSocketServices.sendMessage(messageBody: message.toJson());
 
         emit(ChatsLoaded(messages: updatedMessages));
       } else {
@@ -83,11 +75,11 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
           final updatedMessages = List<Message>.from(currentState.messages)..add(message);
           emit(ChatsLoaded(messages: updatedMessages));
         }
-    } else {
+      } else {
         emit(ChatsLoaded(messages: [message]));
       }
     });
-  
+
     on<MarkMessageAsSeenEvent>((event, emit) {
       final currentState = state;
       if (currentState is! ChatsLoaded) return;
@@ -110,9 +102,9 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
           "chats_type": "seen",
           "to": currentChatUserId,
           "from_": currentUserId,
-          "chat_room_id" : chatRoomId,
-          "message_id" : event.messageId
-        }
+          "chat_room_id": chatRoomId,
+          "message_id": event.messageId,
+        },
       );
 
       emit(currentState.copyWith(messages: updatedMessages));
@@ -127,12 +119,9 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       if (event.message["from_"] != currentChatUserId) return;
 
       if (currentState is ChatsLoaded) {
-        emit(currentState.copyWith(
-          otherUserSeenMsg: true,
-        ));
+        emit(currentState.copyWith(otherUserSeenMsg: true));
       }
     });
-
 
     on<TypingEvent>((event, emit) {
       final currentState = state;
@@ -141,13 +130,10 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       if (message.from_ != currentChatUserId) return;
 
       if (currentState is ChatsLoaded) {
-        emit(currentState.copyWith(
-          isTyping: true,
-          typingUserId: message.from_,
-        ));
+        emit(currentState.copyWith(isTyping: true, typingUserId: message.from_));
 
-        _typingTimer?.cancel();
-        _typingTimer = Timer(const Duration(seconds: 3), () {
+        _typingKillTimer?.cancel();
+        _typingKillTimer = Timer(const Duration(seconds: 3), () {
           add(TypingTimeoutEvent(userId: message.from_));
         });
       }
@@ -156,10 +142,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     on<TypingTimeoutEvent>((event, emit) {
       final currentState = state;
       if (currentState is ChatsLoaded && currentState.typingUserId == event.userId) {
-        emit(currentState.copyWith(
-          isTyping: false,
-          typingUserId: null,
-        ));
+        emit(currentState.copyWith(isTyping: false, typingUserId: null));
       }
     });
 
@@ -167,15 +150,19 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       final currentState = state;
 
       if (currentState is ChatsLoaded) {
-        ChatSocketServices.sendMessage(
-          messageBody: {
-            "type": "chats",
-            "chats_type": "typing",
-            "to": event.currentChatUserId,
-            "from_": currentUserId,
-            "chat_room_id" : chatRoomId,
-          }
-        );
+        if (_typingTimerActive) {
+          log("Ignoring");
+        } else {
+          ChatSocketServices.sendMessage(
+            messageBody: {"type": "chats", "chats_type": "typing", "to": event.currentChatUserId, "from_": currentUserId, "chat_room_id": chatRoomId},
+          );
+          _typingTimerActive = true;
+
+          _typingTimer?.cancel();
+          _typingTimer = Timer(Duration(milliseconds: 1500), () {
+            _typingTimerActive = false;
+          });
+        }
       }
     });
   }
@@ -183,6 +170,8 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   @override
   Future<void> close() {
     _socketSubscription?.cancel();
+    _typingTimer?.cancel();
+    _typingKillTimer?.cancel();
     return super.close();
   }
 }

@@ -6,6 +6,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 final storage = FlutterSecureStorage();
 
 class CustomLoginPage extends StatefulWidget {
+  const CustomLoginPage({super.key});
+
   @override
   _CustomLoginPageState createState() => _CustomLoginPageState();
 }

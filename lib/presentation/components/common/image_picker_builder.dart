@@ -120,7 +120,7 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
           width: contentSize,
           height: contentSize,
           decoration: BoxDecoration(
-            color: hasImage ? Colors.transparent : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+            color: hasImage ? Colors.transparent : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
             borderRadius: BorderRadius.circular(15.r),
           ),
           child: hasImage

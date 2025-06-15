@@ -26,7 +26,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
   @override
   void initState() {
     super.initState();
-    context.read<ConnectionsBloc>().add(LoadConnectionsEvent());
+    context.read<ConnectionsBloc>().add(ReloadConnectionsEvent());
   }
 
   @override
