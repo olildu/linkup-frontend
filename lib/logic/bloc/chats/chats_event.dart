@@ -9,7 +9,7 @@ final class NewMessageEvent extends ChatsEvent {
   final Map<String, dynamic> message;
   NewMessageEvent(this.message);
 }
- 
+
 final class TypingEvent extends ChatsEvent {
   final Map<String, dynamic> message;
   TypingEvent(this.message);
@@ -40,4 +40,12 @@ class MarkMessageAsSeenEvent extends ChatsEvent {
 final class SeenEvent extends ChatsEvent {
   final Map<String, dynamic> message;
   SeenEvent(this.message);
+}
+
+final class UploadMediaEvent extends ChatsEvent {
+  final File file;
+  final MessageType mediaType;
+  final String? description;
+
+  UploadMediaEvent({required this.file, required this.mediaType, this.description});
 }

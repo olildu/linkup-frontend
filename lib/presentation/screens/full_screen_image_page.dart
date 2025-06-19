@@ -20,10 +20,7 @@ class _FullScreenImageScreenState extends State<FullScreenImageScreen> with Sing
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
 
     _animationController.addListener(() {
       if (_animation != null) {
@@ -48,7 +45,7 @@ class _FullScreenImageScreenState extends State<FullScreenImageScreen> with Sing
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        scrolledUnderElevation : 0,
+        scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -68,21 +65,12 @@ class _FullScreenImageScreenState extends State<FullScreenImageScreen> with Sing
               _animation = Matrix4Tween(
                 begin: _transformationController.value,
                 end: _initialTransform,
-              ).animate(CurvedAnimation(
-                parent: _animationController,
-                curve: Curves.easeOut,
-              ));
+              ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
 
               _animationController.forward(from: 0.0);
             }
           },
-          child: Hero(
-            tag: widget.imagePath,
-            child: CachedNetworkImage(
-              imageUrl: widget.imagePath,
-              fit: BoxFit.contain,
-            ),
-          ),
+          child: Hero(tag: widget.imagePath, child: CachedNetworkImage(imageUrl: widget.imagePath, fit: BoxFit.cover)),
         ),
       ),
     );

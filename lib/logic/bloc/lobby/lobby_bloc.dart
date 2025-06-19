@@ -4,7 +4,7 @@ import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:linkup/data/models/matches_connection_model.dart';
-import 'package:linkup/data/web_socket_services/lobby_socket_services/lobby_socket_service.dart';
+import 'package:linkup/data/websocket_services/lobby_socket_services/lobby_socket_service.dart';
 import 'package:meta/meta.dart';
 
 part 'lobby_event.dart';

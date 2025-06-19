@@ -9,4 +9,15 @@ class LoadConnectionsEvent extends ConnectionsEvent {
   LoadConnectionsEvent({this.showLoading = false});
 }
 
-class ReloadConnectionsEvent extends ConnectionsEvent {}
+class ReloadChatConnectionsEvent extends ConnectionsEvent {
+  final LiveChatDataModel? liveChatData;
+
+  ReloadChatConnectionsEvent({this.liveChatData});
+}
+
+class MarkMessagesSeenEvent extends ConnectionsEvent {
+  final int chatRoomId;
+  final int decrementCounterTo;
+
+  MarkMessagesSeenEvent({required this.chatRoomId, this.decrementCounterTo = 0});
+}

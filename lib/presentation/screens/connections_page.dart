@@ -26,7 +26,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
   @override
   void initState() {
     super.initState();
-    context.read<ConnectionsBloc>().add(ReloadConnectionsEvent());
+    context.read<ConnectionsBloc>().add(ReloadChatConnectionsEvent());
   }
 
   @override
@@ -34,24 +34,11 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        title: Text(
-          'Connections',
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
+        title: Text('Connections', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
       ),
       body: SafeArea(
         child: Padding(
@@ -65,10 +52,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildTitleSubtitle(
-                          'Your Matches',
-                          'See your matches and connect with them',
-                        ),
+                        _buildTitleSubtitle('Your Matches', 'See your matches and connect with them'),
 
                         Gap(15.h),
 
@@ -79,9 +63,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                             itemCount: state.matches.length,
                             cacheExtent: 20,
                             itemBuilder: (context, index) {
-                              return _buildAvatar(
-                                candidate: state.matches[index],
-                              );
+                              return _buildAvatar(candidate: state.matches[index]);
                             },
                           ),
                         ),
@@ -95,10 +77,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                 },
               ),
 
-              _buildTitleSubtitle(
-                'Your Chats',
-                'See your chats and connect with them',
-              ),
+              _buildTitleSubtitle('Your Chats', 'See your chats and connect with them'),
 
               Gap(20.h),
 
@@ -108,25 +87,14 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                     if (state is ConnectionsLoaded) {
                       return ListView.builder(
                         itemCount: state.chats.length,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 0.w,
-                          vertical: 10.h,
-                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 10.h),
                         itemBuilder: (context, index) {
-                          return _buildChatTile(
-                            candidate: state.chats[index],
-                          );
+                          return _buildChatTile(candidate: state.chats[index]);
                         },
                       );
                     } else {
                       return Center(
-                        child: Text(
-                          'No chats available',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
+                        child: Text('No chats available', style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.onSurface)),
                       );
                     }
                   },
@@ -139,10 +107,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
     );
   }
 
-  Widget _buildAvatar({
-    required MatchesConnectionModel candidate,
-    double diameter = 70.0,
-  }) {
+  Widget _buildAvatar({required MatchesConnectionModel candidate, double diameter = 70.0}) {
     return GestureDetector(
       onTap: () {
         log('Tapped on ${candidate.username}\'s avatar');
@@ -154,18 +119,13 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
         margin: EdgeInsets.only(right: 10.w),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          image: DecorationImage(
-            image: CachedNetworkImageProvider(candidate.profilePicture),
-            fit: BoxFit.cover,
-          ),
+          image: DecorationImage(image: CachedNetworkImageProvider(candidate.profilePicture), fit: BoxFit.cover),
         ),
       ),
     );
   }
 
-  Widget _buildChatTile({
-    required ChatsConnectionModel candidate,
-  }) {
+  Widget _buildChatTile({required ChatsConnectionModel candidate}) {
     return Padding(
       padding: EdgeInsets.only(bottom: 20.h),
       child: ListTile(
@@ -174,62 +134,48 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
           Navigator.push(
             context,
             CupertinoPageRoute(
-              builder: (context) => BlocProvider(
-                create: (context) => ChatsBloc(
-                  currentChatUserId: candidate.id,
-                  currentUserId: (context.read<ProfileBloc>().state as ProfileLoaded).user.id,
-                  chatRoomId: candidate.chatRoomId
-                )..add(StartChatsEvent()),
-                child: ChatPage(
-                  currentChatUserId: candidate.id,
-                  currentUserId: (context.read<ProfileBloc>().state as ProfileLoaded).user.id,
-                  userName: candidate.username,
-                  userImage: candidate.profilePicture,
-                  chatRoomId: candidate.chatRoomId,
-                ),
-              ),
+              builder:
+                  (context) => BlocProvider(
+                    create:
+                        (context) => ChatsBloc(
+                          currentChatUserId: candidate.id,
+                          currentUserId: (context.read<ProfileBloc>().state as ProfileLoaded).user.id,
+                          chatRoomId: candidate.chatRoomId,
+                        )..add(StartChatsEvent()),
+                    child: ChatPage(
+                      currentChatUserId: candidate.id,
+                      currentUserId: (context.read<ProfileBloc>().state as ProfileLoaded).user.id,
+                      userName: candidate.username,
+                      userImage: candidate.profilePicture,
+                      chatRoomId: candidate.chatRoomId,
+                    ),
+                  ),
             ),
           );
         },
         contentPadding: EdgeInsets.zero,
-        leading: CircleAvatar(
-          radius: 25.r,
-          backgroundImage: CachedNetworkImageProvider(candidate.profilePicture),
-        ),
+        leading: CircleAvatar(radius: 25.r, backgroundImage: CachedNetworkImageProvider(candidate.profilePicture)),
         title: Text(
           candidate.username,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
         ),
-        subtitle: candidate.message != null
-        ? Text(
-          candidate.message!,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-          ),
-        )
-        : null,
+        subtitle:
+            candidate.message != null
+                ? Text(
+                  candidate.message!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                )
+                : null,
         trailing:
             candidate.unseenCounter > 0
                 ? Container(
                   padding: EdgeInsets.all(6.r),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                   child: Text(
                     candidate.unseenCounter > 9 ? '9+' : candidate.unseenCounter.toString(),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 )
                 : null,
@@ -241,26 +187,13 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
+        Text(title, style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
 
         Gap(10.h),
 
         Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color:
-                Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey
-                    : Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 14.sp, color: Theme.of(context).brightness == Brightness.dark ? Colors.grey : Colors.grey.shade600),
         ),
       ],
     );

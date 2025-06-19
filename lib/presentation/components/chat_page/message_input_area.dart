@@ -1,19 +1,22 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/logic/bloc/camera/camera_bloc.dart';
+import 'package:linkup/presentation/screens/media_picker_page.dart';
 
 class MessageInputArea extends StatelessWidget {
   final TextEditingController messageController;
   final bool isTyping;
   final Function() sendMessage;
-  const MessageInputArea({super.key, required this.messageController, required this.isTyping, required this.sendMessage});
+  final Function(File) handleMedia;
 
+  const MessageInputArea({super.key, required this.messageController, required this.isTyping, required this.sendMessage, required this.handleMedia});
   @override
   Widget build(BuildContext context) {
-    print("Is typing in message input area : $isTyping");
-
     return Container(
       padding: EdgeInsets.symmetric(vertical: 8.h),
       decoration: BoxDecoration(
@@ -78,24 +81,33 @@ class MessageInputArea extends StatelessWidget {
                       : Container(
                         decoration: BoxDecoration(color: Theme.of(context).colorScheme.outline, borderRadius: BorderRadius.circular(50.r)),
                         child: Row(
-                          key: const ValueKey('mic_camera_icons'),
+                          key: const ValueKey('camera_icons'),
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: Icon(Icons.mic_none_rounded, color: Theme.of(context).colorScheme.primary, size: 24.sp),
-                              onPressed: () {
-                                log("Mic button pressed");
-                              },
-                              tooltip: 'Send voice message',
-                              padding: EdgeInsets.all(10.r),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.camera_alt_outlined, color: Theme.of(context).colorScheme.primary, size: 24.sp),
-                              onPressed: () {
-                                log("Camera button pressed");
-                              },
-                              tooltip: 'Send image/video',
-                              padding: EdgeInsets.all(10.r),
+                            Hero(
+                              tag: 'camera-hero',
+                              child: IconButton(
+                                icon: Icon(Icons.camera_alt_outlined, color: Theme.of(context).colorScheme.primary, size: 24.sp),
+                                onPressed: () {
+                                  Navigator.of(context)
+                                      .push(
+                                        PageRouteBuilder(
+                                          transitionDuration: Duration(milliseconds: 500),
+                                          pageBuilder:
+                                              (_, __, ___) => BlocProvider(
+                                                create: (context) => CameraBloc()..add(CameraInitEvent()),
+                                                child: const MediaPickerPage(),
+                                              ),
+                                        ),
+                                      )
+                                      .then((imageFile) {
+                                        if (imageFile is! File) return;
+                                        handleMedia(imageFile);
+                                      });
+                                },
+                                tooltip: 'Send image/video',
+                                padding: EdgeInsets.all(10.r),
+                              ),
                             ),
                           ],
                         ),

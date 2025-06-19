@@ -14,4 +14,8 @@ final class ConnectionsLoaded extends ConnectionsState {
   final List<MatchesConnectionModel> matches;
 
   ConnectionsLoaded({required this.chats, required this.matches});
+
+  ConnectionsLoaded copyWith({List<ChatsConnectionModel>? chats, List<MatchesConnectionModel>? matches}) {
+    return ConnectionsLoaded(chats: chats ?? this.chats, matches: matches ?? this.matches);
+  }
 }

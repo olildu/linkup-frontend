@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
-import 'package:linkup/data/web_socket_services/chat_socket_services/chat_socket_service.dart';
+import 'package:linkup/data/websocket_services/chat_socket_services/chat_socket_service.dart';
 import 'package:meta/meta.dart';
 
 part 'chat_sockets_event.dart';

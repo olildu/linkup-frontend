@@ -1,7 +1,8 @@
-import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,12 +11,15 @@ import 'package:linkup/data/data_parser/common/check_contains_emoji.dart';
 import 'package:linkup/data/models/chat_models/message_group_model.dart';
 import 'package:linkup/data/models/chat_models/message_model.dart';
 import 'package:linkup/logic/bloc/chats/chats_bloc.dart';
+import 'package:linkup/logic/bloc/connections/connections_bloc.dart';
 import 'package:linkup/presentation/components/chat_page/calculate_border_shape.dart';
-import 'package:linkup/presentation/components/chat_page/event_intro_animation.dart';
 import 'package:linkup/presentation/components/chat_page/message_input_area.dart';
 import 'package:linkup/presentation/components/chat_page/minor_event_widgets.dart';
 import 'package:linkup/presentation/constants/colors.dart';
+import 'package:linkup/presentation/screens/full_screen_image_page.dart';
 import 'package:linkup/presentation/screens/user_profile_bottom_sheet.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ChatPage extends StatefulWidget {
@@ -44,6 +48,7 @@ class _ChatPageState extends State<ChatPage> {
   static const int _messageGroupTimeThresholdMinutes = 1;
 
   bool _isTyping = false;
+  bool _initalSeenMarked = false;
 
   final GlobalKey<AnimatedListState> _animatedListKey = GlobalKey<AnimatedListState>();
   List<Message> _currentMessages = [];
@@ -196,18 +201,55 @@ class _ChatPageState extends State<ChatPage> {
                 key: Key(message.id.toString()),
                 onVisibilityChanged: (info) {
                   if (!isSentByMe && !message.isSeen) {
-                    log(info.toString());
+                    final int lastMessageID = messages.last.id!;
+                    final int currentSeenMessageID = message.id!;
+                    final int seenDiff = lastMessageID - currentSeenMessageID;
+
                     context.read<ChatsBloc>().add(MarkMessageAsSeenEvent(messageId: message.id!));
+                    if (_initalSeenMarked) {
+                      context.read<ConnectionsBloc>().add(MarkMessagesSeenEvent(chatRoomId: widget.chatRoomId, decrementCounterTo: seenDiff));
+                    }
                   }
                 },
-                child: Container(
-                  constraints: BoxConstraints(maxWidth: 0.75.sw),
-                  padding: isOnlyEmoji ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  decoration: BoxDecoration(color: color, borderRadius: messageBorderRadius),
-                  child: Text(
-                    message.message,
-                    style: TextStyle(fontSize: isOnlyEmoji ? 35.sp : 14.sp, color: isOnlyEmoji ? null : textColor, fontWeight: FontWeight.w400),
-                  ),
+                child: Builder(
+                  builder: (context) {
+                    if (message.media != null) {
+                      final mediaMetaData = message.media!.metadata;
+
+                      final String imageUrl = mediaMetaData["file_url"];
+                      final double height = mediaMetaData["height"];
+                      final double width = mediaMetaData["width"];
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(context, CupertinoPageRoute(builder: (context) => FullScreenImageScreen(imagePath: imageUrl)));
+                        },
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: 0.6.sw, maxHeight: 250.h),
+                          width: height,
+                          height: width,
+                          decoration: BoxDecoration(borderRadius: messageBorderRadius),
+                          clipBehavior: Clip.antiAlias,
+                          child: OctoImage(
+                            image: CachedNetworkImageProvider(imageUrl, maxHeight: height.toInt(), maxWidth: width.toInt()),
+                            placeholderBuilder: blurHash(mediaMetaData["blurhash"]).placeholderBuilder,
+                            errorBuilder: OctoError.icon(color: Colors.red),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    } else {
+                      return Container(
+                        constraints: BoxConstraints(maxWidth: 0.75.sw),
+                        padding: isOnlyEmoji ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                        decoration: BoxDecoration(color: color, borderRadius: messageBorderRadius),
+                        child: Text(
+                          message.message,
+                          style: TextStyle(fontSize: isOnlyEmoji ? 35.sp : 14.sp, color: isOnlyEmoji ? null : textColor, fontWeight: FontWeight.w400),
+                        ),
+                      );
+                    }
+                  },
                 ),
               ),
             ],
@@ -215,6 +257,10 @@ class _ChatPageState extends State<ChatPage> {
         ],
       ),
     );
+  }
+
+  void _handleMedia(File imageFile) {
+    context.read<ChatsBloc>().add(UploadMediaEvent(mediaType: MessageType.image, file: imageFile));
   }
 
   @override
@@ -241,7 +287,7 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
         ),
-        backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.95),
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
         elevation: 0.5,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface, size: 20.sp),
@@ -271,6 +317,10 @@ class _ChatPageState extends State<ChatPage> {
               if (_currentMessages.isEmpty && state.messages.isNotEmpty) {
                 _currentMessages = List.from(state.messages);
               }
+              if (!_initalSeenMarked) {
+                context.read<ConnectionsBloc>().add(MarkMessagesSeenEvent(chatRoomId: widget.chatRoomId, decrementCounterTo: 0));
+                _initalSeenMarked = true;
+              }
 
               return Column(
                 children: [
@@ -293,17 +343,25 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   ),
                   if (state.messages.isNotEmpty &&
-                      ((state.otherUserSeenMsg && state.messages.last.from_ == widget.currentUserId) ||
-                          (state.messages.last.isSeen && state.messages.last.from_ == widget.currentUserId)))
-                    buildSeenIndicator(),
+                      state.messages.last.from_ == widget.currentUserId &&
+                      (state.otherUserSeenMsg || state.messages.last.isSeen))
+                    Builder(
+                      builder: (context) {
+                        return buildSeenIndicator();
+                      },
+                    ),
+
                   if (state.isTyping) buildTypingIndicator(context: context, userImage: widget.userImage, userName: widget.userName),
 
-                  MessageInputArea(messageController: _messageController, isTyping: _isTyping, sendMessage: _sendMessage),
+                  MessageInputArea(messageController: _messageController, isTyping: _isTyping, sendMessage: _sendMessage, handleMedia: _handleMedia),
                 ],
               );
             } else {
               return Center(
-                child: Text('No messages yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 16.sp)),
+                child: Text(
+                  'No messages yet',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16.sp),
+                ),
               );
             }
           },
