@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/data/token/token_services.dart';
 import 'package:linkup/logic/bloc/post_login/post_login_bloc.dart';
 import 'package:linkup/presentation/screens/landing_page.dart';
@@ -33,10 +33,11 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
 
     _controller.forward();
 
-    TokenServices(FlutterSecureStorage()).tokenExists().then((exists) {
+    TokenServices().tokenExists().then((exists) async {
       loggedIn = exists;
       tokenCheckDone = true;
       if (loggedIn) {
+        await TokenServices().registerUserIdIfExists();
         context.read<PostLoginBloc>().add(StartPostLoginEvent());
       }
       _tryNavigate();

@@ -1,12 +1,22 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get_it/get_it.dart';
+import 'package:linkup/data/get_it/get_it_registerer.dart';
 
 class TokenServices {
-  final FlutterSecureStorage _secureStorage;
-  TokenServices(this._secureStorage);
-  
+  final FlutterSecureStorage _secureStorage = GetIt.instance<FlutterSecureStorage>();
+
   Future<bool> tokenExists() async {
-    final String? accessToken = await _secureStorage.read(key: 'access_token');
-    final String? refreshToken = await _secureStorage.read(key: 'refresh_token');
+    final accessToken = await _secureStorage.read(key: 'access_token');
+    final refreshToken = await _secureStorage.read(key: 'refresh_token');
     return accessToken != null && refreshToken != null;
+  }
+
+  Future<void> registerUserIdIfExists() async {
+    final userIdStr = await _secureStorage.read(key: 'user_id');
+    final int? userId = userIdStr != null ? int.tryParse(userIdStr) : null;
+
+    if (userId != null) {
+      GetItRegisterer.registerValue<int>(value: userId, name: "user_id");
+    }
   }
 }

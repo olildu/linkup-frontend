@@ -33,7 +33,7 @@ final class SendMessageEvent extends ChatsEvent {
 class StartChatsEvent extends ChatsEvent {}
 
 class MarkMessageAsSeenEvent extends ChatsEvent {
-  final int messageId;
+  final String messageId;
   MarkMessageAsSeenEvent({required this.messageId});
 }
 
@@ -48,4 +48,19 @@ final class UploadMediaEvent extends ChatsEvent {
   final String? description;
 
   UploadMediaEvent({required this.file, required this.mediaType, this.description});
+}
+
+final class PaginateAddMessagesEvent extends ChatsEvent {
+  final int chatRoomId;
+  final String lastMessageID;
+  final DateTime lastMessageTimeStamp;
+
+  PaginateAddMessagesEvent({required this.chatRoomId, required this.lastMessageID, required this.lastMessageTimeStamp});
+}
+
+final class _ClearSocketDisconnectedFlagEvent extends ChatsEvent {
+  final Message message;
+  final List<Message> beforeInsertionMessageList;
+
+  _ClearSocketDisconnectedFlagEvent({required this.message, required this.beforeInsertionMessageList});
 }

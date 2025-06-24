@@ -4,12 +4,15 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:isar/isar.dart';
 import 'package:linkup/data/http_services/chat_http_services/chat_http_services.dart';
 import 'package:linkup/data/http_services/common_http_services/common_http_services.dart';
+import 'package:linkup/data/isar_classes/message_table.dart';
 import 'package:linkup/data/models/chat_models/media_message_data_model.dart';
 import 'package:linkup/data/models/chat_models/message_model.dart';
 import 'package:linkup/data/websocket_services/chat_socket_services/chat_socket_service.dart';
 import 'package:meta/meta.dart';
+import 'package:uuid/uuid.dart';
 
 part 'chats_event.dart';
 part 'chats_state.dart';
@@ -18,13 +21,14 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   final int currentChatUserId;
   final int currentUserId;
   final int chatRoomId;
+  final Isar isar;
 
   StreamSubscription<String>? _socketSubscription;
   Timer? _typingKillTimer;
   Timer? _typingTimer;
   bool _typingTimerActive = false;
 
-  ChatsBloc({required this.currentChatUserId, required this.currentUserId, required this.chatRoomId}) : super(ChatsInitial()) {
+  ChatsBloc({required this.currentChatUserId, required this.currentUserId, required this.chatRoomId, required this.isar}) : super(ChatsInitial()) {
     on<StartChatsEvent>(_onStartChats);
     on<SendMessageEvent>(_onSendMessage);
     on<NewMessageEvent>(_onNewMessage);
@@ -34,6 +38,8 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     on<TypingTimeoutEvent>(_onTypingTimeout);
     on<SendTypingEvent>(_onSendTyping);
     on<UploadMediaEvent>(_onUploadMedia);
+    on<PaginateAddMessagesEvent>(_onPaginateAddMessagesEvent);
+    on<_ClearSocketDisconnectedFlagEvent>(_onClearSocketDisconnectedFlagEvent);
   }
 
   Future<void> _onStartChats(StartChatsEvent event, Emitter<ChatsState> emit) async {
@@ -57,25 +63,70 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
         }
       });
 
-      final messages = await ChatHttpServices().fetchChatMessages(chatRoomId: chatRoomId);
+      late List<Message> messages = [];
+      try {
+        messages = await ChatHttpServices().fetchChatMessages(chatRoomId: chatRoomId);
+      } catch (httpError) {
+        log("[ChatsBloc] No internet reffering to cache");
+        messages = (await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).findAll()).map((e) => e.toMessage()).toList();
+
+        // TODO
+      }
+
+      await isar.writeTxn(() async {
+        List first20Messages = (messages.sublist(
+          0,
+          messages.length >= 20 ? 20 : messages.length,
+        )); // We are interested to store only first 20 messages
+        await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).deleteAll(); // Delete all messages from the current ChatRoomID
+
+        for (Message message in first20Messages) {
+          await isar.messageTables.put(MessageTable.fromMessage(message));
+        }
+      });
+
       log("[ChatsBloc] Chat socket initialized");
-      emit(ChatsLoaded(messages: messages));
+      emit(ChatsLoaded(messages: messages, isSocketConnected: true));
     } catch (e, stackTrace) {
       log("[ChatsBloc] StartChatsEvent error", error: e, stackTrace: stackTrace);
       emit(ChatsError());
     }
   }
 
-  void _onSendMessage(SendMessageEvent event, Emitter<ChatsState> emit) {
+  Future<void> _onSendMessage(SendMessageEvent event, Emitter<ChatsState> emit) async {
     try {
       final message = event.message;
       final currentState = state;
 
       if (currentState is ChatsLoaded) {
-        final updatedMessages = List<Message>.from(currentState.messages)..add(message);
-        ChatSocketServices.sendMessage(messageBody: message.toJson());
-        log("[ChatsBloc] Message sent ${message.toJson()}");
-        emit(currentState.copyWith(messages: updatedMessages, otherUserSeenMsg: false));
+        if (ChatSocketServices.isConnected) {
+          final updatedMessages = List<Message>.from(currentState.messages)..add(message); // Add to messageList
+          ChatSocketServices.sendMessage(messageBody: message.toJson()); // Send to socket
+
+          await isar.writeTxn(() async {
+            final tableMessageCount = await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).count(); // Fetch count
+            if (tableMessageCount >= 20) {
+              // If tableMessageCount
+              // Delete first message which is filtered using timestamp
+              final lastMessage = await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).sortByTimestamp().findFirst();
+              if (lastMessage != null) {
+                // Null check
+                isar.messageTables.delete(lastMessage.id);
+              }
+            }
+
+            isar.messageTables.put(MessageTable.fromMessage(message)); // Add new message to cache
+          });
+
+          emit(currentState.copyWith(messages: updatedMessages, otherUserSeenMsg: false)); // Emit new state
+        } else {
+          final beforeInsertionMessageList = currentState.messages;
+          final updatedMessages = List<Message>.from(currentState.messages)..add(message);
+          emit(currentState.copyWith(messages: updatedMessages, otherUserSeenMsg: false));
+
+          await Future.delayed(Duration(seconds: 1));
+          add(_ClearSocketDisconnectedFlagEvent(message: message, beforeInsertionMessageList: beforeInsertionMessageList));
+        }
       } else {
         emit(ChatsLoaded(messages: [message]));
       }
@@ -133,13 +184,23 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     }
   }
 
-  void _onSeenEvent(SeenEvent event, Emitter<ChatsState> emit) {
+  Future<void> _onSeenEvent(SeenEvent event, Emitter<ChatsState> emit) async {
     try {
       final currentState = state;
       if (event.message["from_"] != currentChatUserId) return;
 
       if (currentState is ChatsLoaded) {
         log("[ChatsBloc] Seen event received");
+
+        await isar.writeTxn(() async {
+          final message = await isar.messageTables.filter().messageIDEqualTo(event.message["message_id"]).findFirst();
+
+          if (message != null) {
+            message.isSeen = true;
+            await isar.messageTables.put(message);
+          }
+        });
+
         emit(currentState.copyWith(otherUserSeenMsg: true));
       }
     } catch (e, stackTrace) {
@@ -209,6 +270,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       log("[ChatsBloc] Media uploaded");
 
       final Message message = Message(
+        id: Uuid().v4(),
         message: "",
         to: currentChatUserId,
         timestamp: DateTime.now(),
@@ -225,6 +287,36 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       log("[ChatsBloc] UploadMediaEvent error", error: e, stackTrace: stackTrace);
       emit(ChatsError());
     }
+  }
+
+  Future<void> _onPaginateAddMessagesEvent(PaginateAddMessagesEvent event, Emitter<ChatsState> emit) async {
+    final currentState = state;
+    if (currentState is! ChatsLoaded) return;
+
+    // Fetch older messages using the last known message ID
+    final olderMessages = await ChatHttpServices().fetchPaginatedChatMessages(
+      chatRoomId: chatRoomId,
+      lastMessageId: event.lastMessageID,
+      lastMessageTimeStamp: event.lastMessageTimeStamp,
+    );
+
+    final currentMessages = currentState.messages;
+
+    for (var x in olderMessages) {
+      log("Fetched older message ID: ${x.message}, ${x.id}");
+    }
+
+    // Prepend older messages to current messages
+    final updatedMessages = [...olderMessages, ...currentMessages];
+
+    emit(currentState.copyWith(messages: updatedMessages));
+  }
+
+  Future<void> _onClearSocketDisconnectedFlagEvent(_ClearSocketDisconnectedFlagEvent event, Emitter<ChatsState> emit) async {
+    final currentState = state;
+    if (currentState is! ChatsLoaded) return;
+
+    emit(currentState.copyWith(messages: event.beforeInsertionMessageList, isSocketConnected: false, message: event.message));
   }
 
   @override

@@ -12,12 +12,16 @@ final class ChatsLoaded extends ChatsState {
   final bool isTyping;
   final bool otherUserSeenMsg;
   final int? typingUserId;
+  final bool isSocketConnected;
+  final Message? message;
 
   ChatsLoaded({
     required this.messages,
     this.isTyping = false,
     this.otherUserSeenMsg = false,
     this.typingUserId,
+    this.isSocketConnected = false,
+    this.message,
   });
 
   ChatsLoaded copyWith({
@@ -25,12 +29,16 @@ final class ChatsLoaded extends ChatsState {
     bool? isTyping,
     bool? otherUserSeenMsg,
     int? typingUserId,
+    bool? isSocketConnected,
+    Message? message,
   }) {
     return ChatsLoaded(
       messages: messages ?? this.messages,
       isTyping: isTyping ?? this.isTyping,
       otherUserSeenMsg: otherUserSeenMsg ?? this.otherUserSeenMsg,
       typingUserId: typingUserId ?? this.typingUserId,
+      isSocketConnected: isSocketConnected ?? this.isSocketConnected,
+      message: message ?? this.message,
     );
   }
 }

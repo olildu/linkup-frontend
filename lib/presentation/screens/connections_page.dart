@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:get_it/get_it.dart';
+import 'package:isar/isar.dart';
+import 'package:linkup/data/models/chat_models/message_model.dart';
 import 'package:linkup/data/models/chats_connection_model.dart';
 import 'package:linkup/data/models/matches_connection_model.dart';
 import 'package:linkup/logic/bloc/chats/chats_bloc.dart';
@@ -139,12 +142,13 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                     create:
                         (context) => ChatsBloc(
                           currentChatUserId: candidate.id,
-                          currentUserId: (context.read<ProfileBloc>().state as ProfileLoaded).user.id,
+                          currentUserId: GetIt.instance<int>(instanceName: 'user_id'),
                           chatRoomId: candidate.chatRoomId,
+                          isar: GetIt.instance<Isar>(),
                         )..add(StartChatsEvent()),
                     child: ChatPage(
                       currentChatUserId: candidate.id,
-                      currentUserId: (context.read<ProfileBloc>().state as ProfileLoaded).user.id,
+                      currentUserId: GetIt.instance<int>(instanceName: 'user_id'),
                       userName: candidate.username,
                       userImage: candidate.profilePicture,
                       chatRoomId: candidate.chatRoomId,
@@ -159,15 +163,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
           candidate.username,
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
         ),
-        subtitle:
-            candidate.message != null
-                ? Text(
-                  candidate.message!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
-                )
-                : null,
+        subtitle: _buildMessageSubtitle(candidate),
         trailing:
             candidate.unseenCounter > 0
                 ? Container(
@@ -181,6 +177,32 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                 : null,
       ),
     );
+  }
+
+  Widget _buildMessageSubtitle(ChatsConnectionModel candidate) {
+    if (candidate.messageType == MessageType.image) {
+      return Row(
+        children: [
+          Icon(Icons.image, size: 16.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+          SizedBox(width: 6.w),
+          Text('Image', style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+        ],
+      );
+    } else {
+      if (candidate.message != null && candidate.message!.isNotEmpty) {
+        return Text(
+          candidate.message!,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+        );
+      } else {
+        return Text(
+          'No messages yet',
+          style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontStyle: FontStyle.italic),
+        );
+      }
+    }
   }
 
   Widget _buildTitleSubtitle(String title, String subtitle) {

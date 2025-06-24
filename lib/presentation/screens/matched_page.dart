@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:get_it/get_it.dart';
 import 'package:haptic_feedback/haptic_feedback.dart';
+import 'package:isar/isar.dart';
 import 'package:linkup/data/http_services/chat_http_services/chat_http_services.dart';
 import 'package:linkup/data/models/matches_connection_model.dart';
 import 'package:linkup/logic/bloc/chats/chats_bloc.dart';
@@ -122,9 +124,12 @@ class _MatchedPageState extends State<MatchedPage> {
                             builder:
                                 (ctx) => BlocProvider(
                                   create:
-                                      (ctx) =>
-                                          ChatsBloc(currentChatUserId: widget.matchUser.id, currentUserId: currentUserId, chatRoomId: -1)
-                                            ..add(StartChatsEvent()),
+                                      (ctx) => ChatsBloc(
+                                        currentChatUserId: widget.matchUser.id,
+                                        currentUserId: currentUserId,
+                                        chatRoomId: -1,
+                                        isar: GetIt.instance<Isar>(),
+                                      )..add(StartChatsEvent()),
                                   child: ChatPage(
                                     currentChatUserId: widget.matchUser.id,
                                     currentUserId: currentUserId,

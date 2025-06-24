@@ -2,8 +2,19 @@ import 'package:linkup/data/models/chat_models/media_message_data_model.dart';
 
 enum MessageType { text, voice, image }
 
+MessageType messageTypeFromString(String? type) {
+  switch (type) {
+    case 'voice':
+      return MessageType.voice;
+    case 'image':
+      return MessageType.image;
+    default:
+      return MessageType.text;
+  }
+}
+
 class Message {
-  final int? id;
+  final String id;
   final String message;
 
   final int to;
@@ -21,12 +32,12 @@ class Message {
     required this.timestamp,
     required this.from_,
     required this.chatRoomId,
-    this.id = -1,
+    required this.id,
     this.isSeen = false,
     this.media,
   });
 
-  Message copyWith({int? id, String? message, int? to, int? from_, DateTime? timestamp, int? chatRoomId, bool? isSeen, MediaMessageData? media}) {
+  Message copyWith({String? id, String? message, int? to, int? from_, DateTime? timestamp, int? chatRoomId, bool? isSeen, MediaMessageData? media}) {
     return Message(
       id: id ?? this.id,
       message: message ?? this.message,
@@ -41,7 +52,7 @@ class Message {
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: (json['message_id'] ?? -1) as int,
+      id: (json['message_id'] ?? -1) as String,
       message: json['message'] as String,
       to: json['to'] as int,
       from_: json['from_'] as int,
@@ -53,7 +64,15 @@ class Message {
   }
 
   Map<String, dynamic> toJson() {
-    final data = {"type": "chats", "chats_type": "message", 'message': message, 'to': to, 'from_': from_, 'chat_room_id': chatRoomId};
+    final data = {
+      "message_id": id,
+      "type": "chats",
+      "chats_type": "message",
+      'message': message,
+      'to': to,
+      'from_': from_,
+      'chat_room_id': chatRoomId,
+    };
     if (media != null) {
       data['media'] = media!.toJson();
     }

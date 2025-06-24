@@ -10,6 +10,7 @@ import 'package:gap/gap.dart';
 import 'package:linkup/data/data_parser/common/check_contains_emoji.dart';
 import 'package:linkup/data/models/chat_models/message_group_model.dart';
 import 'package:linkup/data/models/chat_models/message_model.dart';
+import 'package:linkup/data/models/live_chat_data_model.dart';
 import 'package:linkup/logic/bloc/chats/chats_bloc.dart';
 import 'package:linkup/logic/bloc/connections/connections_bloc.dart';
 import 'package:linkup/presentation/components/chat_page/calculate_border_shape.dart';
@@ -20,6 +21,7 @@ import 'package:linkup/presentation/screens/full_screen_image_page.dart';
 import 'package:linkup/presentation/screens/user_profile_bottom_sheet.dart';
 import 'package:linkup/presentation/utils/blurhash_util.dart';
 import 'package:octo_image/octo_image.dart';
+import 'package:uuid/v4.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ChatPage extends StatefulWidget {
@@ -49,6 +51,7 @@ class _ChatPageState extends State<ChatPage> {
 
   bool _isTyping = false;
   bool _initalSeenMarked = false;
+  bool _isSocketConnected = false;
 
   final GlobalKey<AnimatedListState> _animatedListKey = GlobalKey<AnimatedListState>();
   List<Message> _currentMessages = [];
@@ -63,6 +66,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     _messageController.addListener(_handleTypingChange);
+    _scrollController.addListener(_handlePagination);
   }
 
   @override
@@ -71,6 +75,21 @@ class _ChatPageState extends State<ChatPage> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _handlePagination() {
+    if (_scrollController.position.atEdge) {
+      bool isTop = _scrollController.position.pixels == 0;
+      if (!isTop) {
+        final String lastMessageID = _currentMessages.first.id;
+        final DateTime lastMessageTimeStamp = _currentMessages.first.timestamp;
+
+        log('Paginating with lastMessageID: $lastMessageID');
+        context.read<ChatsBloc>().add(
+          PaginateAddMessagesEvent(chatRoomId: widget.chatRoomId, lastMessageID: lastMessageID, lastMessageTimeStamp: lastMessageTimeStamp),
+        );
+      }
+    }
   }
 
   void _handleTypingChange() {
@@ -88,12 +107,16 @@ class _ChatPageState extends State<ChatPage> {
   void _sendMessage() {
     if (_messageController.text.trim().isNotEmpty) {
       final newMessage = Message(
+        id: UuidV4().generate(),
         message: _messageController.text.trim(),
         to: widget.currentChatUserId,
         from_: widget.currentUserId,
         timestamp: DateTime.now(),
         chatRoomId: widget.chatRoomId,
       );
+
+      log("Message ${newMessage.toJson()}");
+
       context.read<ChatsBloc>().add((SendMessageEvent(message: newMessage)));
       _messageController.clear();
 
@@ -102,6 +125,18 @@ class _ChatPageState extends State<ChatPage> {
           _scrollController.animateTo(_scrollController.position.minScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
         }
       });
+
+      if (_isSocketConnected) {
+        LiveChatDataModel liveChatData = LiveChatDataModel(
+          from_: widget.currentUserId,
+          chatRoomId: widget.chatRoomId,
+          message: "Sent just now",
+          unseenCounterIncBy: 0,
+          messageType: MessageType.text,
+        );
+
+        context.read<ConnectionsBloc>().add(ReloadChatConnectionsEvent(liveChatData: liveChatData));
+      }
     }
   }
 
@@ -201,11 +236,12 @@ class _ChatPageState extends State<ChatPage> {
                 key: Key(message.id.toString()),
                 onVisibilityChanged: (info) {
                   if (!isSentByMe && !message.isSeen) {
-                    final int lastMessageID = messages.last.id!;
-                    final int currentSeenMessageID = message.id!;
-                    final int seenDiff = lastMessageID - currentSeenMessageID;
+                    final int lastIndex = messages.length - 1;
+                    final int seenIndex = messages.indexWhere((m) => m.id == message.id);
+                    final int seenDiff = lastIndex - seenIndex;
 
-                    context.read<ChatsBloc>().add(MarkMessageAsSeenEvent(messageId: message.id!));
+                    context.read<ChatsBloc>().add(MarkMessageAsSeenEvent(messageId: message.id));
+
                     if (_initalSeenMarked) {
                       context.read<ConnectionsBloc>().add(MarkMessagesSeenEvent(chatRoomId: widget.chatRoomId, decrementCounterTo: seenDiff));
                     }
@@ -294,6 +330,7 @@ class _ChatPageState extends State<ChatPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 10.w),
         child: BlocConsumer<ChatsBloc, ChatsState>(
@@ -321,6 +358,11 @@ class _ChatPageState extends State<ChatPage> {
                 context.read<ConnectionsBloc>().add(MarkMessagesSeenEvent(chatRoomId: widget.chatRoomId, decrementCounterTo: 0));
                 _initalSeenMarked = true;
               }
+              if (state.isSocketConnected == false && state.message != null) {
+                _messageController.text = state.message!.message;
+              }
+
+              _isSocketConnected = state.isSocketConnected;
 
               return Column(
                 children: [
