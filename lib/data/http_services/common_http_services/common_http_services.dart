@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:linkup/data/models/chat_models/message_model.dart';
+import 'package:linkup/data/enums/message_type_enum.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
 
 class CommonHttpServices {

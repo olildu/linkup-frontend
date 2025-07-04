@@ -10,7 +10,7 @@ import 'package:linkup/presentation/constants/global_constants.dart';
 class ChatHttpServices {
   final FlutterSecureStorage _secureStorage = GetIt.instance<FlutterSecureStorage>();
 
-  Future<int> startChat({required int chatUserId}) async {
+  Future<Map<String, dynamic>> startChat({required int chatUserId}) async {
     final accessToken = await _secureStorage.read(key: 'access_token');
 
     final response = await http.post(
@@ -20,7 +20,7 @@ class ChatHttpServices {
     );
 
     if (response.statusCode == 200) {
-      return 0;
+      return jsonDecode(response.body);
     } else {
       log('[ChatHttpServices] Error: ${response.statusCode}');
       throw Exception('Failed to start chat. Status: ${response.statusCode} Server-Response: ${response.body}');

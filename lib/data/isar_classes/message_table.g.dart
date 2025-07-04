@@ -32,28 +32,33 @@ const MessageTableSchema = CollectionSchema(
       name: r'isSeen',
       type: IsarType.bool,
     ),
-    r'mediaJson': PropertySchema(
+    r'isSent': PropertySchema(
       id: 3,
+      name: r'isSent',
+      type: IsarType.bool,
+    ),
+    r'mediaJson': PropertySchema(
+      id: 4,
       name: r'mediaJson',
       type: IsarType.string,
     ),
     r'message': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'message',
       type: IsarType.string,
     ),
     r'messageID': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'messageID',
       type: IsarType.string,
     ),
     r'timestamp': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'timestamp',
       type: IsarType.dateTime,
     ),
     r'to': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'to',
       type: IsarType.long,
     )
@@ -98,11 +103,12 @@ void _messageTableSerialize(
   writer.writeLong(offsets[0], object.chatRoomId);
   writer.writeLong(offsets[1], object.from_);
   writer.writeBool(offsets[2], object.isSeen);
-  writer.writeString(offsets[3], object.mediaJson);
-  writer.writeString(offsets[4], object.message);
-  writer.writeString(offsets[5], object.messageID);
-  writer.writeDateTime(offsets[6], object.timestamp);
-  writer.writeLong(offsets[7], object.to);
+  writer.writeBool(offsets[3], object.isSent);
+  writer.writeString(offsets[4], object.mediaJson);
+  writer.writeString(offsets[5], object.message);
+  writer.writeString(offsets[6], object.messageID);
+  writer.writeDateTime(offsets[7], object.timestamp);
+  writer.writeLong(offsets[8], object.to);
 }
 
 MessageTable _messageTableDeserialize(
@@ -116,11 +122,12 @@ MessageTable _messageTableDeserialize(
   object.from_ = reader.readLong(offsets[1]);
   object.id = id;
   object.isSeen = reader.readBool(offsets[2]);
-  object.mediaJson = reader.readStringOrNull(offsets[3]);
-  object.message = reader.readString(offsets[4]);
-  object.messageID = reader.readString(offsets[5]);
-  object.timestamp = reader.readDateTime(offsets[6]);
-  object.to = reader.readLong(offsets[7]);
+  object.isSent = reader.readBool(offsets[3]);
+  object.mediaJson = reader.readStringOrNull(offsets[4]);
+  object.message = reader.readString(offsets[5]);
+  object.messageID = reader.readString(offsets[6]);
+  object.timestamp = reader.readDateTime(offsets[7]);
+  object.to = reader.readLong(offsets[8]);
   return object;
 }
 
@@ -138,14 +145,16 @@ P _messageTableDeserializeProp<P>(
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readDateTime(offset)) as P;
+    case 8:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -414,6 +423,16 @@ extension MessageTableQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isSeen',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MessageTable, MessageTable, QAfterFilterCondition> isSentEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSent',
         value: value,
       ));
     });
@@ -1000,6 +1019,18 @@ extension MessageTableQuerySortBy
     });
   }
 
+  QueryBuilder<MessageTable, MessageTable, QAfterSortBy> sortByIsSent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MessageTable, MessageTable, QAfterSortBy> sortByIsSentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSent', Sort.desc);
+    });
+  }
+
   QueryBuilder<MessageTable, MessageTable, QAfterSortBy> sortByMediaJson() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mediaJson', Sort.asc);
@@ -1112,6 +1143,18 @@ extension MessageTableQuerySortThenBy
     });
   }
 
+  QueryBuilder<MessageTable, MessageTable, QAfterSortBy> thenByIsSent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MessageTable, MessageTable, QAfterSortBy> thenByIsSentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSent', Sort.desc);
+    });
+  }
+
   QueryBuilder<MessageTable, MessageTable, QAfterSortBy> thenByMediaJson() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mediaJson', Sort.asc);
@@ -1193,6 +1236,12 @@ extension MessageTableQueryWhereDistinct
     });
   }
 
+  QueryBuilder<MessageTable, MessageTable, QDistinct> distinctByIsSent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSent');
+    });
+  }
+
   QueryBuilder<MessageTable, MessageTable, QDistinct> distinctByMediaJson(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1250,6 +1299,12 @@ extension MessageTableQueryProperty
   QueryBuilder<MessageTable, bool, QQueryOperations> isSeenProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isSeen');
+    });
+  }
+
+  QueryBuilder<MessageTable, bool, QQueryOperations> isSentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSent');
     });
   }
 

@@ -5,9 +5,11 @@ import 'dart:io';
 
 import 'package:bloc/bloc.dart';
 import 'package:isar/isar.dart';
+import 'package:linkup/data/enums/message_type_enum.dart';
 import 'package:linkup/data/http_services/chat_http_services/chat_http_services.dart';
 import 'package:linkup/data/http_services/common_http_services/common_http_services.dart';
 import 'package:linkup/data/isar_classes/message_table.dart';
+import 'package:linkup/data/isar_classes/unsent_messages_table.dart';
 import 'package:linkup/data/models/chat_models/media_message_data_model.dart';
 import 'package:linkup/data/models/chat_models/message_model.dart';
 import 'package:linkup/data/websocket_services/chat_socket_services/chat_socket_service.dart';
@@ -23,10 +25,14 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   final int chatRoomId;
   final Isar isar;
 
-  StreamSubscription<String>? _socketSubscription;
+  StreamSubscription<String>? _messageSocketSubscription;
+  StreamSubscription<bool>? _statusSubscription;
+
   Timer? _typingKillTimer;
   Timer? _typingTimer;
   bool _typingTimerActive = false;
+
+  final String _logTag = "ChatsBloc";
 
   ChatsBloc({required this.currentChatUserId, required this.currentUserId, required this.chatRoomId, required this.isar}) : super(ChatsInitial()) {
     on<StartChatsEvent>(_onStartChats);
@@ -42,35 +48,68 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     on<_ClearSocketDisconnectedFlagEvent>(_onClearSocketDisconnectedFlagEvent);
   }
 
-  Future<void> _onStartChats(StartChatsEvent event, Emitter<ChatsState> emit) async {
-    emit(ChatsLoading());
-    try {
-      _socketSubscription?.cancel();
-      _socketSubscription = ChatSocketServices.messageStream.listen((raw) {
-        final data = jsonDecode(raw);
-        if (data["type"] == "chats") {
-          switch (data["chats_type"]) {
-            case "message":
-              add(NewMessageEvent(data));
-              break;
-            case "typing":
-              add(TypingEvent(data));
-              break;
-            case "seen":
-              add(SeenEvent(data));
-              break;
-          }
+  // Helper Functions
+  void _startSocketListeners() {
+    // Message Socket Subscription
+    _messageSocketSubscription?.cancel();
+    _messageSocketSubscription = ChatSocketServices.messageStream.listen((raw) {
+      final data = jsonDecode(raw);
+      if (data["type"] == "chats") {
+        switch (data["chats_type"]) {
+          case "message":
+            add(NewMessageEvent(data));
+            break;
+          case "typing":
+            add(TypingEvent(data));
+            break;
+          case "seen":
+            add(SeenEvent(data));
+            break;
         }
-      });
+      }
+    });
 
+    // Connection Status Subscription
+    _statusSubscription?.cancel();
+    _statusSubscription = ChatSocketServices.connectionStatusStream.listen((connectionStatus) {
+      log("Connection status : $connectionStatus", name: _logTag);
+      if (connectionStatus == true) {
+        add(StartChatsEvent(showLoading: false));
+      }
+    });
+  }
+
+  Future<void> _cacheMessageWithLimit(Message message) async {
+    await isar.writeTxn(() async {
+      final messageCount = await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).count();
+
+      if (messageCount >= 20) {
+        final oldestMessage = await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).sortByTimestamp().findFirst();
+
+        if (oldestMessage != null) {
+          await isar.messageTables.delete(oldestMessage.id);
+        }
+      }
+
+      await isar.messageTables.put(MessageTable.fromMessage(message));
+    });
+  }
+
+  // Event Functions
+  Future<void> _onStartChats(StartChatsEvent event, Emitter<ChatsState> emit) async {
+    if (!event.showLoading) emit(ChatsLoading()); // If showLoading false then don't emit loading
+    try {
       late List<Message> messages = [];
+
+      _startSocketListeners();
+
       try {
+        // Try to fetch from internet
         messages = await ChatHttpServices().fetchChatMessages(chatRoomId: chatRoomId);
       } catch (httpError) {
-        log("[ChatsBloc] No internet reffering to cache");
+        // Fails then refer to cache for the last 20 messages
+        log("No internet reffering to cache", name: _logTag);
         messages = (await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).findAll()).map((e) => e.toMessage()).toList();
-
-        // TODO
       }
 
       await isar.writeTxn(() async {
@@ -85,10 +124,10 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
         }
       });
 
-      log("[ChatsBloc] Chat socket initialized");
-      emit(ChatsLoaded(messages: messages, isSocketConnected: true));
+      log("Chat socket initialized", name: _logTag);
+      emit(ChatsLoaded(messages: messages, isSocketConnected: ChatSocketServices.isConnected));
     } catch (e, stackTrace) {
-      log("[ChatsBloc] StartChatsEvent error", error: e, stackTrace: stackTrace);
+      log("StartChatsEvent error", error: e, stackTrace: stackTrace, name: _logTag);
       emit(ChatsError());
     }
   }
@@ -98,40 +137,27 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       final message = event.message;
       final currentState = state;
 
-      if (currentState is ChatsLoaded) {
-        if (ChatSocketServices.isConnected) {
-          final updatedMessages = List<Message>.from(currentState.messages)..add(message); // Add to messageList
-          ChatSocketServices.sendMessage(messageBody: message.toJson()); // Send to socket
-
-          await isar.writeTxn(() async {
-            final tableMessageCount = await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).count(); // Fetch count
-            if (tableMessageCount >= 20) {
-              // If tableMessageCount
-              // Delete first message which is filtered using timestamp
-              final lastMessage = await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).sortByTimestamp().findFirst();
-              if (lastMessage != null) {
-                // Null check
-                isar.messageTables.delete(lastMessage.id);
-              }
-            }
-
-            isar.messageTables.put(MessageTable.fromMessage(message)); // Add new message to cache
-          });
-
-          emit(currentState.copyWith(messages: updatedMessages, otherUserSeenMsg: false)); // Emit new state
-        } else {
-          final beforeInsertionMessageList = currentState.messages;
-          final updatedMessages = List<Message>.from(currentState.messages)..add(message);
-          emit(currentState.copyWith(messages: updatedMessages, otherUserSeenMsg: false));
-
-          await Future.delayed(Duration(seconds: 1));
-          add(_ClearSocketDisconnectedFlagEvent(message: message, beforeInsertionMessageList: beforeInsertionMessageList));
-        }
-      } else {
+      if (currentState is! ChatsLoaded) {
         emit(ChatsLoaded(messages: [message]));
+        return;
       }
+
+      final isConnected = ChatSocketServices.isConnected;
+
+      final updatedMessage = isConnected ? message : message.copyWith(isSent: false);
+      final updatedMessages = List<Message>.from(currentState.messages)..add(updatedMessage);
+
+      emit(currentState.copyWith(messages: updatedMessages, otherUserSeenMsg: false));
+
+      if (isConnected) {
+        ChatSocketServices.sendMessage(messageBody: message.toJson());
+      } else {
+        add(_ClearSocketDisconnectedFlagEvent(message: updatedMessage));
+      }
+
+      await _cacheMessageWithLimit(updatedMessage);
     } catch (e, stackTrace) {
-      log("[ChatsBloc] SendMessageEvent error", error: e, stackTrace: stackTrace);
+      log("SendMessageEvent error", error: e, stackTrace: stackTrace, name: _logTag);
     }
   }
 
@@ -143,14 +169,14 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       if (currentState is ChatsLoaded) {
         if (message.to == currentUserId && message.from_ == currentChatUserId) {
           final updatedMessages = List<Message>.from(currentState.messages)..add(message);
-          log("[ChatsBloc] Message received");
+          log("Message received", name: _logTag);
           emit(currentState.copyWith(messages: updatedMessages, isTyping: false));
         }
       } else {
         emit(ChatsLoaded(messages: [message]));
       }
     } catch (e, stackTrace) {
-      log("[ChatsBloc] NewMessageEvent error", error: e, stackTrace: stackTrace);
+      log("NewMessageEvent error", error: e, stackTrace: stackTrace, name: _logTag);
     }
   }
 
@@ -177,10 +203,10 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
         },
       );
 
-      log("[ChatsBloc] Message marked as seen: ${event.messageId}");
+      log("Message marked as seen: ${event.messageId}", name: _logTag);
       emit(currentState.copyWith(messages: updatedMessages));
     } catch (e, stackTrace) {
-      log("[ChatsBloc] MarkMessageAsSeenEvent error", error: e, stackTrace: stackTrace);
+      log("MarkMessageAsSeenEvent error", error: e, stackTrace: stackTrace, name: _logTag);
     }
   }
 
@@ -190,8 +216,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       if (event.message["from_"] != currentChatUserId) return;
 
       if (currentState is ChatsLoaded) {
-        log("[ChatsBloc] Seen event received");
-
+        log("Seen event received", name: _logTag);
         await isar.writeTxn(() async {
           final message = await isar.messageTables.filter().messageIDEqualTo(event.message["message_id"]).findFirst();
 
@@ -204,7 +229,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
         emit(currentState.copyWith(otherUserSeenMsg: true));
       }
     } catch (e, stackTrace) {
-      log("[ChatsBloc] SeenEvent error", error: e, stackTrace: stackTrace);
+      log("SeenEvent error", error: e, stackTrace: stackTrace, name: _logTag);
     }
   }
 
@@ -222,10 +247,10 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
           add(TypingTimeoutEvent(userId: message.from_));
         });
 
-        log("[ChatsBloc] Typing event from ${message.from_}");
+        log("Typing event from ${message.from_}", name: _logTag);
       }
     } catch (e, stackTrace) {
-      log("[ChatsBloc] TypingEvent error", error: e, stackTrace: stackTrace);
+      log("TypingEvent error", error: e, stackTrace: stackTrace, name: _logTag);
     }
   }
 
@@ -236,7 +261,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
         emit(currentState.copyWith(isTyping: false, typingUserId: null));
       }
     } catch (e, stackTrace) {
-      log("[ChatsBloc] TypingTimeoutEvent error", error: e, stackTrace: stackTrace);
+      log("TypingTimeoutEvent error", error: e, stackTrace: stackTrace, name: _logTag);
     }
   }
 
@@ -254,10 +279,10 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
           _typingTimerActive = false;
         });
 
-        log("[ChatsBloc] Typing event sent");
+        log("Typing event sent", name: _logTag);
       }
     } catch (e, stackTrace) {
-      log("[ChatsBloc] SendTypingEvent error", error: e, stackTrace: stackTrace);
+      log("SendTypingEvent error", error: e, stackTrace: stackTrace, name: _logTag);
     }
   }
 
@@ -267,8 +292,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       if (state is! ChatsLoaded) return;
 
       final metadata = await CommonHttpServices().uploadMedia(file: event.file, mediaType: event.mediaType);
-      log("[ChatsBloc] Media uploaded");
-
+      log("Media uploaded", name: _logTag);
       final Message message = Message(
         id: Uuid().v4(),
         message: "",
@@ -284,7 +308,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       add(SendMessageEvent(message: message));
       emit(currentState);
     } catch (e, stackTrace) {
-      log("[ChatsBloc] UploadMediaEvent error", error: e, stackTrace: stackTrace);
+      log("UploadMediaEvent error", error: e, stackTrace: stackTrace, name: _logTag);
       emit(ChatsError());
     }
   }
@@ -292,6 +316,8 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   Future<void> _onPaginateAddMessagesEvent(PaginateAddMessagesEvent event, Emitter<ChatsState> emit) async {
     final currentState = state;
     if (currentState is! ChatsLoaded) return;
+
+    emit(currentState.copyWith(isFetchingPaginatedMessages: true));
 
     // Fetch older messages using the last known message ID
     final olderMessages = await ChatHttpServices().fetchPaginatedChatMessages(
@@ -303,25 +329,28 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     final currentMessages = currentState.messages;
 
     for (var x in olderMessages) {
-      log("Fetched older message ID: ${x.message}, ${x.id}");
+      log("Fetched older message ID: ${x.message}, ${x.id}", name: _logTag);
     }
 
     // Prepend older messages to current messages
     final updatedMessages = [...olderMessages, ...currentMessages];
 
-    emit(currentState.copyWith(messages: updatedMessages));
+    emit(currentState.copyWith(messages: updatedMessages, isFetchingPaginatedMessages: true));
   }
 
   Future<void> _onClearSocketDisconnectedFlagEvent(_ClearSocketDisconnectedFlagEvent event, Emitter<ChatsState> emit) async {
     final currentState = state;
     if (currentState is! ChatsLoaded) return;
 
-    emit(currentState.copyWith(messages: event.beforeInsertionMessageList, isSocketConnected: false, message: event.message));
+    await isar.writeTxn(() async {
+      await isar.unsentMessagesTables.put(UnsentMessagesTable.fromMessage(event.message));
+    });
   }
 
   @override
   Future<void> close() {
-    _socketSubscription?.cancel();
+    _messageSocketSubscription?.cancel();
+    _statusSubscription?.cancel();
     _typingTimer?.cancel();
     _typingKillTimer?.cancel();
     return super.close();

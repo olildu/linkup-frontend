@@ -19,6 +19,7 @@ class MessageTable {
 
   late int chatRoomId;
   late bool isSeen;
+  late bool isSent;
 
   late DateTime timestamp;
 
@@ -33,6 +34,7 @@ class MessageTable {
     from_ = msg.from_;
     chatRoomId = msg.chatRoomId;
     isSeen = msg.isSeen;
+    isSent = msg.isSent;
     timestamp = msg.timestamp;
     mediaJson = msg.media != null ? jsonEncode(msg.media!.toJson()) : null;
   }
@@ -45,6 +47,7 @@ class MessageTable {
       from_: from_,
       chatRoomId: chatRoomId,
       isSeen: isSeen,
+      isSent: isSent,
       timestamp: timestamp,
       media: mediaJson != null ? MediaMessageData.fromJson(jsonDecode(mediaJson!)) : null,
     );

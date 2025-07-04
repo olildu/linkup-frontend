@@ -11,7 +11,7 @@ class LoadConnectionsEvent extends ConnectionsEvent {
 
 class ReloadChatConnectionsEvent extends ConnectionsEvent {
   final LiveChatDataModel? liveChatData;
-
+  
   ReloadChatConnectionsEvent({this.liveChatData});
 }
 

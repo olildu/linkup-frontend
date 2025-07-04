@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
+import 'package:linkup/data/enums/message_type_enum.dart';
 import 'package:linkup/data/models/chat_models/message_model.dart';
 import 'package:linkup/data/models/chats_connection_model.dart';
 import 'package:linkup/data/models/matches_connection_model.dart';

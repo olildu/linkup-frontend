@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-// import 'dart:math' as math; // No longer needed for math.pow or math.min
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
-
 import '../../../presentation/constants/global_constants.dart';
 
 class ChatSocketServices {
@@ -18,8 +15,8 @@ class ChatSocketServices {
   static final StreamController<String> _messageController = StreamController<String>.broadcast();
   static Stream<String> get messageStream => _messageController.stream;
 
-  static final StreamController<String?> _disconnectEventController = StreamController<String?>.broadcast();
-  static Stream<String?> get onDisconnectEvent => _disconnectEventController.stream;
+  static final StreamController<bool> _connectionStatusController = StreamController<bool>.broadcast();
+  static Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
 
   static Timer? _reconnectionTimer;
   static int _reconnectAttempts = 0;
@@ -27,20 +24,31 @@ class ChatSocketServices {
 
   static bool _isManuallyDisconnected = false;
   static bool _isConnecting = false;
+  static bool _currentConnectionStatusEmitted = false;
 
   static bool get isConnected => _channel != null && _channel?.closeCode == null && !_isConnecting;
 
+  static final String _logTag = "ChatSocketServices";
+
+  static _updateConnectionStatusController() {
+    // Only broadcast if change is there
+    if (_currentConnectionStatusEmitted != isConnected) {
+      _connectionStatusController.add(isConnected);
+      _currentConnectionStatusEmitted = isConnected;
+    }
+  }
+
   static Future<void> connect({bool isRetry = false}) async {
     if (_isConnecting && !isRetry) {
-      log("WebSocket connection attempt already in progress.");
+      log("WebSocket connection attempt already in progress.", name: _logTag);
       return;
     }
     if (isConnected && !isRetry) {
-      log("WebSocket is already connected.");
+      log("WebSocket is already connected.", name: _logTag);
       return;
     }
     if (_isManuallyDisconnected && !isRetry) {
-      log("WebSocket was manually disconnected. Call connect() again if you want to reconnect.");
+      log("WebSocket was manually disconnected. Call connect() again if you want to reconnect.", name: _logTag);
       return;
     }
 
@@ -51,15 +59,15 @@ class ChatSocketServices {
 
     _currentToken = await _secureStorage.read(key: 'access_token');
     if (_currentToken == null) {
-      log("No token found. WebSocket connection aborted.");
-      _disconnectEventController.add("No token, connection aborted.");
+      log("No token found. WebSocket connection aborted.", name: _logTag);
+      _updateConnectionStatusController();
       _isConnecting = false;
       return;
     }
 
     final uri = Uri.parse("$WS_BASE_URL/chat");
 
-    log("Attempting to connect to WebSocket: $uri (Attempt: ${_reconnectAttempts + 1})");
+    log("Attempting to connect to WebSocket: $uri (Attempt: ${_reconnectAttempts + 1})", name: _logTag);
 
     try {
       _channel = IOWebSocketChannel.connect(
@@ -75,47 +83,46 @@ class ChatSocketServices {
         (data) {
           _messageController.add(data);
           if (_reconnectAttempts > 0) {
-            log("WebSocket reconnected successfully.");
+            log("WebSocket reconnected successfully.", name: _logTag);
           }
           _reconnectAttempts = 0;
+          _updateConnectionStatusController();
         },
         onDone: () {
           _isConnecting = false;
           final closeCode = _channel?.closeCode;
           final closeReason = _channel?.closeReason;
-          log("WebSocket connection closed. Code: $closeCode, Reason: $closeReason, Manually disconnected: $_isManuallyDisconnected");
+          log("WebSocket connection closed. Code: $closeCode, Reason: $closeReason, Manually disconnected: $_isManuallyDisconnected", name: _logTag);
           _channel = null;
           if (!_isManuallyDisconnected) {
-            _disconnectEventController.add("Closed (Done): Code $closeCode");
+            _updateConnectionStatusController();
             _scheduleReconnect();
           } else {
-            _disconnectEventController.add("Manually disconnected (Done)");
+            _updateConnectionStatusController();
           }
         },
         onError: (error) {
           _isConnecting = false;
-          log("WebSocket error: $error. Manually disconnected: $_isManuallyDisconnected");
+          log("WebSocket error: $error. Manually disconnected: $_isManuallyDisconnected", name: _logTag);
           _channel = null;
           if (!_isManuallyDisconnected) {
-            _disconnectEventController.add("Error: $error");
             _scheduleReconnect();
-          } else {
-            _disconnectEventController.add("Error during manual disconnect: $error");
-          }
+          } else {}
+          _updateConnectionStatusController();
         },
         cancelOnError: true,
       );
 
-      log("WebSocket connected to $uri and listener is active.");
+      log("WebSocket connected to $uri and listener is active.", name: _logTag);
     } catch (e) {
       _isConnecting = false;
-      log("Failed to connect to WebSocket (exception during connect call): $e");
+      log("Failed to connect to WebSocket (exception during connect call): $e", name: _logTag);
       _channel = null;
       if (!_isManuallyDisconnected) {
-        _disconnectEventController.add("Connection failed: $e");
+        _updateConnectionStatusController();
         _scheduleReconnect();
       } else {
-        _disconnectEventController.add("Connection failed during manual disconnect attempt: $e");
+        _updateConnectionStatusController();
       }
     }
   }
@@ -125,24 +132,24 @@ class ChatSocketServices {
       return;
     }
     if (_isManuallyDisconnected) {
-      log("Manual disconnect in progress. Won't schedule reconnect.");
+      log("Manual disconnect in progress. Won't schedule reconnect.", name: _logTag);
       return;
     }
 
     const Duration reconnectDelay = _fixedReconnectDelay;
 
     _reconnectAttempts++;
-    log("Scheduling WebSocket reconnect attempt $_reconnectAttempts in ${reconnectDelay.inSeconds} seconds...");
+    log("Scheduling WebSocket reconnect attempt $_reconnectAttempts in ${reconnectDelay.inSeconds} seconds...", name: _logTag);
 
     _reconnectionTimer = Timer(reconnectDelay, () {
-      log("Retrying WebSocket connection (attempt $_reconnectAttempts)...");
+      log("Retrying WebSocket connection (attempt $_reconnectAttempts)...", name: _logTag);
       connect(isRetry: true);
     });
   }
 
   static void sendMessage({required Map messageBody}) {
     if (!isConnected) {
-      log("WebSocket not connected. Cannot send message. Current channel: $_channel, isConnecting: $_isConnecting");
+      log("WebSocket not connected. Cannot send message. Current channel: $_channel, isConnecting: $_isConnecting", name: _logTag);
       return;
     }
 
@@ -151,18 +158,18 @@ class ChatSocketServices {
     try {
       _channel!.sink.add(payload);
     } catch (e) {
-      log("Failed to send message: $e. Marking as disconnected and attempting reconnect.");
+      log("Failed to send message: $e. Marking as disconnected and attempting reconnect.", name: _logTag);
       _channel = null;
       _isConnecting = false;
       if (!_isManuallyDisconnected) {
-        _disconnectEventController.add("Send failed: $e");
+        _updateConnectionStatusController();
         _scheduleReconnect();
       }
     }
   }
 
   static void disconnect() {
-    log("Manual WebSocket disconnection initiated.");
+    log("Manual WebSocket disconnection initiated.", name: _logTag);
     _isManuallyDisconnected = true;
     _reconnectionTimer?.cancel();
     _reconnectAttempts = 0;
@@ -170,18 +177,18 @@ class ChatSocketServices {
     if (_channel != null) {
       _channel!.sink.close(status.goingAway);
       _channel = null;
-      log("WebSocket connection closed by client.");
+      log("WebSocket connection closed by client.", name: _logTag);
     } else {
-      log("No active WebSocket connection to close.");
+      log("No active WebSocket connection to close.", name: _logTag);
     }
     _isConnecting = false;
-    _disconnectEventController.add("Manually disconnected by client");
+    _updateConnectionStatusController();
   }
 
   static void dispose() {
-    log("Disposing ChatSocketServices.");
+    log("Disposing ChatSocketServices.", name: _logTag);
     disconnect();
     _messageController.close();
-    _disconnectEventController.close();
+    _connectionStatusController.close();
   }
 }

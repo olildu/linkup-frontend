@@ -30,7 +30,10 @@ final class SendMessageEvent extends ChatsEvent {
   SendMessageEvent({required this.message});
 }
 
-class StartChatsEvent extends ChatsEvent {}
+class StartChatsEvent extends ChatsEvent {
+  final bool showLoading;
+  StartChatsEvent({this.showLoading = false});
+}
 
 class MarkMessageAsSeenEvent extends ChatsEvent {
   final String messageId;
@@ -60,7 +63,6 @@ final class PaginateAddMessagesEvent extends ChatsEvent {
 
 final class _ClearSocketDisconnectedFlagEvent extends ChatsEvent {
   final Message message;
-  final List<Message> beforeInsertionMessageList;
 
-  _ClearSocketDisconnectedFlagEvent({required this.message, required this.beforeInsertionMessageList});
+  _ClearSocketDisconnectedFlagEvent({required this.message});
 }

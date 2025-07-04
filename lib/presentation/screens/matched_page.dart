@@ -61,7 +61,7 @@ class _MatchedPageState extends State<MatchedPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: widget.meet8State ? Colors.transparent : Theme.of(context).colorScheme.onSurface,
+      backgroundColor: Colors.transparent,
       appBar:
           widget.meet8State
               ? null
@@ -116,9 +116,9 @@ class _MatchedPageState extends State<MatchedPage> {
                     text: "Start Messaging",
                     onPressed: () async {
                       final currentUserId = (context.read<ProfileBloc>().state as ProfileLoaded).user.id;
-                      final status = await ChatHttpServices().startChat(chatUserId: widget.matchUser.id);
+                      final response = await ChatHttpServices().startChat(chatUserId: widget.matchUser.id);
 
-                      if (status == 0) {
+                      if (response["success"] == true) {
                         Navigator.of(context).pushReplacement(
                           CupertinoPageRoute(
                             builder:
@@ -127,7 +127,7 @@ class _MatchedPageState extends State<MatchedPage> {
                                       (ctx) => ChatsBloc(
                                         currentChatUserId: widget.matchUser.id,
                                         currentUserId: currentUserId,
-                                        chatRoomId: -1,
+                                        chatRoomId: response["chat_room_id"],
                                         isar: GetIt.instance<Isar>(),
                                       )..add(StartChatsEvent()),
                                   child: ChatPage(
@@ -135,8 +135,7 @@ class _MatchedPageState extends State<MatchedPage> {
                                     currentUserId: currentUserId,
                                     userName: widget.matchUser.username,
                                     userImage: widget.matchUser.profilePicture,
-                                    // TODO: Replace with actual chat room ID
-                                    chatRoomId: 10,
+                                    chatRoomId: response["chat_room_id"],
                                   ),
                                 ),
                           ),

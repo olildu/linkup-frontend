@@ -9,12 +9,14 @@ import 'package:isar/isar.dart';
 import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/data/isar_classes/chats_table.dart';
 import 'package:linkup/data/isar_classes/message_table.dart';
+import 'package:linkup/data/isar_classes/unsent_messages_table.dart';
 
 import 'package:linkup/logic/bloc/connections/connections_bloc.dart';
 import 'package:linkup/logic/bloc/matches/matches_bloc.dart';
 import 'package:linkup/logic/bloc/post_login/post_login_bloc.dart';
 import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/chat_sockets/chat_sockets_bloc.dart';
+import 'package:linkup/logic/bloc/web_socket/connection_sockets/connections_socket_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/web_socket_bloc.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
@@ -31,7 +33,7 @@ Future<void> main() async {
   final getIt = GetIt.instance;
 
   final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open([MessageTableSchema, ChatsTableSchema], directory: dir.path, inspector: true);
+  final isar = await Isar.open([MessageTableSchema, ChatsTableSchema, UnsentMessagesTableSchema], directory: dir.path, inspector: true);
 
   GetItRegisterer.registerValue<Isar>(value: isar);
   GetItRegisterer.registerValue<FlutterSecureStorage>(value: FlutterSecureStorage());
@@ -48,7 +50,8 @@ Future<void> main() async {
           BlocProvider(create: (_) => ConnectionsBloc(isar: getIt<Isar>())),
           BlocProvider(create: (_) => ProfileBloc()),
           BlocProvider(create: (_) => WebSocketBloc()),
-          BlocProvider(create: (_) => ChatSocketsBloc()),
+          BlocProvider(create: (_) => ChatSocketsBloc(isar: getIt<Isar>())),
+          BlocProvider(create: (_) => ConnectionsSocketBloc()),
 
           BlocProvider(
             create:
@@ -58,6 +61,7 @@ Future<void> main() async {
                   chatSocketsBloc: context.read<ChatSocketsBloc>(),
                   profileBloc: context.read<ProfileBloc>(),
                   connectionsBloc: context.read<ConnectionsBloc>(),
+                  connectionsSocketBloc: context.read<ConnectionsSocketBloc>(),
                 ),
           ),
         ],

@@ -1,4 +1,4 @@
-import 'package:linkup/data/models/chat_models/message_model.dart';
+import 'package:linkup/data/enums/message_type_enum.dart';
 
 class MediaMessageData {
   final String fileKey;

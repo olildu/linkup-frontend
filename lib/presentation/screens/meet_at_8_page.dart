@@ -104,7 +104,7 @@ class _MeetAt8PageState extends State<MeetAt8Page> with SingleTickerProviderStat
                     BackgroundAnimation(animation: _controller, blur: true),
                     TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: 1),
-                      duration: const Duration(milliseconds: 1300), 
+                      duration: const Duration(milliseconds: 1300),
                       curve: Curves.easeInOut,
                       builder: (context, opacity, _) {
                         return Opacity(

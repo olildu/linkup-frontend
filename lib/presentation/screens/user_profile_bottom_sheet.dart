@@ -76,9 +76,9 @@ class OtherProfileLoadedView extends StatelessWidget {
                 onPressed: () async {
                   final navigator = Navigator.of(parentContext, rootNavigator: true);
                   final currentUserId = (context.read<ProfileBloc>().state as ProfileLoaded).user.id;
-                  final status = await ChatHttpServices().startChat(chatUserId: candidate.id);
+                  final response = await ChatHttpServices().startChat(chatUserId: candidate.id);
 
-                  if (status == 0) {
+                  if (response["success"] == true) {
                     navigator.pop();
                     await Future.delayed(const Duration(milliseconds: 500));
 
@@ -90,7 +90,7 @@ class OtherProfileLoadedView extends StatelessWidget {
                                   (ctx) => ChatsBloc(
                                     currentChatUserId: candidate.id,
                                     currentUserId: currentUserId,
-                                    chatRoomId: -1,
+                                    chatRoomId: response["chat_room_id"],
                                     isar: GetIt.instance<Isar>(),
                                   )..add(StartChatsEvent()),
                               child: ChatPage(
@@ -98,8 +98,7 @@ class OtherProfileLoadedView extends StatelessWidget {
                                 currentUserId: currentUserId,
                                 userName: candidate.username,
                                 userImage: candidate.profilePicture,
-                                // TODO: Replace with actual chat room ID
-                                chatRoomId: 10,
+                                chatRoomId: response["chat_room_id"],
                               ),
                             ),
                       ),

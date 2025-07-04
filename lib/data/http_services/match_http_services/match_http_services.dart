@@ -18,7 +18,7 @@ class MatchHttpServices {
     final response = await http.get(Uri.parse("$BASE_URL/matches/get-matches"), headers: {'Authorization': 'Bearer $accessToken'});
 
     if (response.statusCode == 200) {
-      final Map jsonData = json.decode(response.body)[0];
+      final Map jsonData = json.decode(response.body);
       final List matches = jsonData["matches"];
 
       return matches.map((json) => MatchCandidateModel.fromJson(json)).toList();
