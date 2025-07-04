@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/logic/cubit/theme/theme_cubit.dart';
 import 'package:linkup/presentation/components/common/bullet_point_builder.dart';
 import 'package:linkup/presentation/components/common/image_picker_builder.dart';
 import 'package:linkup/presentation/components/signup_page/image_builder.dart';
@@ -10,7 +11,6 @@ import 'package:linkup/presentation/constants/singup_page/date_picker.dart';
 import 'package:linkup/presentation/components/signup_page/page_title_builder_component.dart';
 import 'package:linkup/presentation/components/signup_page/text_input_builder_component.dart';
 import 'package:linkup/logic/provider/data_validator_provider.dart';
-import 'package:linkup/logic/provider/theme_provider.dart';
 import 'package:linkup/data/data_parser/signup_page/data_parser.dart';
 import 'package:provider/provider.dart';
 
@@ -27,7 +27,7 @@ class SignUpPageFlow {
   }
 
   DataValidatorProvider get dataValidatorProvider => Provider.of<DataValidatorProvider>(context, listen: false);
-  ThemeProvider get themeProvider => Provider.of<ThemeProvider>(context, listen: false);
+  ThemeCubit get themeCubit => context.read<ThemeCubit>();
 
   void _initializeFlow() {
     flow = [
@@ -37,7 +37,7 @@ class SignUpPageFlow {
           highlightWord: "who",
           subText: "linkup keeps your personal information safe and private",
         ),
-        'action': ImageBuilder(imagePath: "assets/images/care.png", darkMode: themeProvider.isDarkMode),
+        'action': ImageBuilder(imagePath: "assets/images/care.png", darkMode: themeCubit.isDark),
         "showProgressBar": false,
       },
       {
@@ -166,7 +166,7 @@ class SignUpPageFlow {
       },
       {
         'title': PageTitle(inputText: "One last step\nTell us what you love, So we can match you better", highlightWord: ["love", "match"]),
-        'action': ImageBuilder(imagePath: "assets/images/like.png", darkMode: themeProvider.isDarkMode),
+        'action': ImageBuilder(imagePath: "assets/images/like.png", darkMode: themeCubit.isDark),
         'showProgressBar': false,
       },
       {

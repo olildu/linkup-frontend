@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,10 +16,10 @@ import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/chat_sockets/chat_sockets_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/connection_sockets/connections_socket_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/web_socket_bloc.dart';
+import 'package:linkup/logic/cubit/theme/theme_cubit.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/logic/provider/data_validator_provider.dart';
-import 'package:linkup/logic/provider/theme_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,12 +36,9 @@ Future<void> main() async {
   GetItRegisterer.registerValue<Isar>(value: isar);
   GetItRegisterer.registerValue<FlutterSecureStorage>(value: FlutterSecureStorage());
 
-  final info = await Service.getInfo();
-  log('VM Service info: $info');
-
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => DataValidatorProvider()), ChangeNotifierProvider(create: (_) => ThemeProvider())],
+      providers: [ChangeNotifierProvider(create: (_) => DataValidatorProvider())],
       child: MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => MatchesBloc()),
@@ -52,6 +47,7 @@ Future<void> main() async {
           BlocProvider(create: (_) => WebSocketBloc()),
           BlocProvider(create: (_) => ChatSocketsBloc(isar: getIt<Isar>())),
           BlocProvider(create: (_) => ConnectionsSocketBloc()),
+          BlocProvider(create: (_) => ThemeCubit()),
 
           BlocProvider(
             create:
@@ -76,18 +72,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
     return ScreenUtilInit(
       designSize: const Size(411.43, 866.28),
-      child: MaterialApp(
-        title: 'linkup',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        darkTheme: AppTheme.darkTheme,
-        // themeMode: themeProvider.themeMode,
-        themeMode: ThemeMode.dark,
-        home: const LoadingScreenPostLogin(),
-        // home: const SingupFlowPage(),
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp(
+            title: 'linkup',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            home: const LoadingScreenPostLogin(),
+          );
+        },
       ),
     );
   }
