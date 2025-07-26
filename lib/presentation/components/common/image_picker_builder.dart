@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart'; 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,14 +11,14 @@ class ImagePickerBuilder extends StatefulWidget {
   final int maxImages;
   final Function(List<XFile>) onImagesChanged;
   final bool allowMultipleSelection;
-  final List<String> initialImages; 
+  final List<String> initialImages;
 
   const ImagePickerBuilder({
     super.key,
     this.maxImages = 6,
     required this.onImagesChanged,
     this.allowMultipleSelection = true,
-    this.initialImages = const [], 
+    this.initialImages = const [],
   });
 
   @override
@@ -41,17 +41,19 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
   Future<void> _pickImages() async {
     if (_displayedItems.length >= widget.maxImages) return;
     try {
-      final List<XFile> pickedImages = widget.allowMultipleSelection
-          ? await _picker.pickMultiImage()
-          : [(await _picker.pickImage(source: ImageSource.gallery))].whereType<XFile>().toList();
+      final List<XFile> pickedImages =
+          widget.allowMultipleSelection
+              ? await _picker.pickMultiImage()
+              : [(await _picker.pickImage(source: ImageSource.gallery))].whereType<XFile>().toList();
 
       if (pickedImages.isNotEmpty) {
         setState(() {
           int remainingSlots = widget.maxImages - _displayedItems.length;
           if (remainingSlots > 0) {
-            final newImagesToAdd = pickedImages.where((newlyPickedFile) {
-              return !_displayedItems.whereType<XFile>().any((existingXFile) => existingXFile.path == newlyPickedFile.path);
-            }).toList();
+            final newImagesToAdd =
+                pickedImages.where((newlyPickedFile) {
+                  return !_displayedItems.whereType<XFile>().any((existingXFile) => existingXFile.path == newlyPickedFile.path);
+                }).toList();
 
             int imagesToAddCount = newImagesToAdd.length > remainingSlots ? remainingSlots : newImagesToAdd.length;
             if (imagesToAddCount > 0) {
@@ -95,7 +97,7 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
       } else if (item is XFile) {
         imageDisplayWidget = Image.file(File(item.path), fit: BoxFit.cover);
       } else {
-        imageDisplayWidget = const SizedBox.shrink(); 
+        imageDisplayWidget = const SizedBox.shrink();
       }
     } else {
       imageDisplayWidget = Center(
@@ -120,29 +122,30 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
           width: contentSize,
           height: contentSize,
           decoration: BoxDecoration(
-            color: hasImage ? Colors.transparent : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: hasImage ? Colors.transparent : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(15.r),
           ),
-          child: hasImage
-              ? Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(15.r), child: imageDisplayWidget),
-                    Positioned(
-                      top: 5.r,
-                      right: 5.r,
-                      child: GestureDetector(
-                        onTap: () => _removeImage(index),
-                        child: Container(
-                          padding: EdgeInsets.all(4.sp),
-                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                          child: Icon(Icons.close, color: Colors.white, size: 14.sp),
+          child:
+              hasImage
+                  ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(borderRadius: BorderRadius.circular(15.r), child: imageDisplayWidget),
+                      Positioned(
+                        top: 5.r,
+                        right: 5.r,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: EdgeInsets.all(4.sp),
+                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                            child: Icon(Icons.close, color: Colors.white, size: 14.sp),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                )
-              : imageDisplayWidget,
+                    ],
+                  )
+                  : imageDisplayWidget,
         ),
       ),
     );
@@ -154,52 +157,47 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
     final double dottedBorderInternalPaddingPerSide = 1.sp;
     const double dottedBorderStrokeWidth = 1.5;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      double availableWidth = constraints.maxWidth;
-      double shellWidthPerItem = (2 * dottedBorderInternalPaddingPerSide) + dottedBorderStrokeWidth;
-      double totalShellWidthForAllItemsInRow = 3 * shellWidthPerItem;
-      double totalGapSpaceInRow = 2 * itemGap;
-      double effectiveContentWidthForRow = availableWidth - totalShellWidthForAllItemsInRow - totalGapSpaceInRow;
-      if (effectiveContentWidthForRow < 0) effectiveContentWidthForRow = 0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double availableWidth = constraints.maxWidth;
+        double shellWidthPerItem = (2 * dottedBorderInternalPaddingPerSide) + dottedBorderStrokeWidth;
+        double totalShellWidthForAllItemsInRow = 3 * shellWidthPerItem;
+        double totalGapSpaceInRow = 2 * itemGap;
+        double effectiveContentWidthForRow = availableWidth - totalShellWidthForAllItemsInRow - totalGapSpaceInRow;
+        if (effectiveContentWidthForRow < 0) effectiveContentWidthForRow = 0;
 
-      double smallItemContentWidth = (effectiveContentWidthForRow / 3);
-      double largeItemContentWidth = ((2 * smallItemContentWidth) + itemGap);
+        double smallItemContentWidth = (effectiveContentWidthForRow / 3);
+        double largeItemContentWidth = ((2 * smallItemContentWidth) + itemGap);
 
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: itemGap),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                _buildImageContainer(largeItemContentWidth, 0),
-                Gap(itemGap),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildImageContainer(smallItemContentWidth, 1),
-                    Gap(itemGap),
-                    _buildImageContainer(smallItemContentWidth, 2),
-                  ],
-                ),
-              ],
-            ),
-            Gap(itemGap),
-            Row(
-              children: [
-                _buildImageContainer(smallItemContentWidth, 3),
-                Gap(itemGap),
-                _buildImageContainer(smallItemContentWidth, 4),
-                if (widget.maxImages > 5) ...[
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: itemGap),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  _buildImageContainer(largeItemContentWidth, 0),
                   Gap(itemGap),
-                  _buildImageContainer(smallItemContentWidth, 5),
-                ]
-              ],
-            ),
-          ],
-        ),
-      );
-    });
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [_buildImageContainer(smallItemContentWidth, 1), Gap(itemGap), _buildImageContainer(smallItemContentWidth, 2)],
+                  ),
+                ],
+              ),
+              Gap(itemGap),
+              Row(
+                children: [
+                  _buildImageContainer(smallItemContentWidth, 3),
+                  Gap(itemGap),
+                  _buildImageContainer(smallItemContentWidth, 4),
+                  if (widget.maxImages > 5) ...[Gap(itemGap), _buildImageContainer(smallItemContentWidth, 5)],
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

@@ -43,7 +43,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     on<TypingEvent>(_onTypingEvent);
     on<TypingTimeoutEvent>(_onTypingTimeout);
     on<SendTypingEvent>(_onSendTyping);
-    on<UploadMediaEvent>(_onUploadMedia);
+    on<uploadMediaChatEvent>(_onuploadMediaChat);
     on<PaginateAddMessagesEvent>(_onPaginateAddMessagesEvent);
     on<_ClearSocketDisconnectedFlagEvent>(_onClearSocketDisconnectedFlagEvent);
   }
@@ -286,12 +286,12 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     }
   }
 
-  Future<void> _onUploadMedia(UploadMediaEvent event, Emitter<ChatsState> emit) async {
+  Future<void> _onuploadMediaChat(uploadMediaChatEvent event, Emitter<ChatsState> emit) async {
     try {
       final currentState = state;
       if (state is! ChatsLoaded) return;
 
-      final metadata = await CommonHttpServices().uploadMedia(file: event.file, mediaType: event.mediaType);
+      final metadata = await CommonHttpServices().uploadMediaChat(file: event.file, mediaType: event.mediaType);
       log("Media uploaded", name: _logTag);
       final Message message = Message(
         id: Uuid().v4(),
@@ -308,7 +308,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       add(SendMessageEvent(message: message));
       emit(currentState);
     } catch (e, stackTrace) {
-      log("UploadMediaEvent error", error: e, stackTrace: stackTrace, name: _logTag);
+      log("uploadMediaChatEvent error", error: e, stackTrace: stackTrace, name: _logTag);
       emit(ChatsError());
     }
   }

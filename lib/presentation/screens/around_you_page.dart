@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
@@ -34,28 +33,16 @@ class _AroundYouPageState extends State<AroundYouPage> {
               numberOfCardsDisplayed: candidates.length,
               cardsCount: candidates.length,
               isLoop: false,
-              allowedSwipeDirection: AllowedSwipeDirection.symmetric(
-                vertical: false,
-                horizontal: true,
-              ),
+              allowedSwipeDirection: AllowedSwipeDirection.symmetric(vertical: false, horizontal: true),
               onSwipe: (previousIndex, currentIndex, direction) {
                 context.read<MatchesBloc>().add(
-                  SwipeProfileEvent(
-                    likedId: candidates[previousIndex].id,
-                    direction: direction,
-                    previousIndex: previousIndex
-                  ),
+                  SwipeProfileEvent(likedId: candidates[previousIndex].id, direction: direction, previousIndex: previousIndex),
                 );
-                
+
                 scrollController.jumpTo(0);
                 return true;
               },
-              cardBuilder: (
-                context,
-                index,
-                percentThresholdX,
-                percentThresholdY,
-              ) {
+              cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     double availableHeight = constraints.maxHeight;
@@ -102,56 +89,29 @@ class _AroundYouPageState extends State<AroundYouPage> {
               subtitle: "Come back later or adjust your search preferences.",
             );
           } else {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
         },
       ),
     );
   }
 
-  Widget _buildMessage({
-    IconData? icon,
-    required String title,
-    required String subtitle,
-  }) {
+  Widget _buildMessage({IconData? icon, required String title, required String subtitle}) {
     return Container(
       color: AppColors.primary,
-      padding: EdgeInsets.symmetric(
-        horizontal: MediaQuery.of(context).size.width * 0.05,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 100.sp,
-            color: AppColors.whiteTextColor,
-          ),
+          Icon(icon, size: 100.sp, color: AppColors.whiteTextColor),
           Gap(30.h),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 30.sp,
-              color: AppColors.whiteTextColor,
-            ),
-          ),
-          Gap(30.h), 
-          Text( 
-            subtitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.whiteTextColor.withOpacity(0.9),
-            ),
-          ),
+          Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 30.sp, color: AppColors.whiteTextColor)),
+          Gap(30.h),
+          Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 14.sp, color: AppColors.whiteTextColor.withValues(alpha: 0.9))),
           Gap(100.h),
         ],
       ),
     );
   }
-
 }

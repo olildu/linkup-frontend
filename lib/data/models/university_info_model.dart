@@ -17,7 +17,7 @@ class UniversityInfoModel {
   }
 
   factory UniversityInfoModel.fromUserModel(UserModel user) {
-    return UniversityInfoModel(universityMajor: user.universityMajor, universityYear: user.universityYear);
+    return UniversityInfoModel(universityMajor: user.universityMajor!, universityYear: user.universityYear!);
   }
 
   Map<String, dynamic> toJson() {

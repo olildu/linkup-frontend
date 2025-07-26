@@ -184,9 +184,9 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
     if (candidate.messageType == MessageType.image) {
       return Row(
         children: [
-          Icon(Icons.image, size: 16.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+          Icon(Icons.image, size: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
           SizedBox(width: 6.w),
-          Text('Image', style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+          Text('Image', style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
         ],
       );
     } else {
@@ -195,12 +195,12 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
           candidate.message!,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+          style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
         );
       } else {
         return Text(
           'No messages yet',
-          style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontStyle: FontStyle.italic),
+          style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
         );
       }
     }

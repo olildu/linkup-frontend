@@ -19,4 +19,14 @@ class TokenServices {
       GetItRegisterer.registerValue<int>(value: userId, name: "user_id");
     }
   }
+
+  Future<void> clearTokens() async {
+    final refreshToken = await _secureStorage.read(key: 'refresh_token');
+
+    if (refreshToken != null) {
+      await _secureStorage.delete(key: 'access_token');
+      await _secureStorage.delete(key: 'refresh_token');
+      await _secureStorage.delete(key: 'user_id');
+    }
+  }
 }

@@ -3,25 +3,25 @@ import 'dart:developer';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:isar/isar.dart';
 import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
 
 class AuthHttpServices {
+  static final FlutterSecureStorage _secureStorage = GetIt.instance<FlutterSecureStorage>();
+  static const String _logTag = 'AuthHttpServices';
+
   /// Attempts login with given email and password.
-  /// Saves access and refresh tokens to secure storage on success.
+  /// Saves access, refresh tokens and userID to secure storage on success.
   /// Returns HTTP status code on success.
   /// Throws an exception on network or unexpected errors.
   static Future<int> login(String email, String password) async {
-    final FlutterSecureStorage secureStorage = GetIt.instance<FlutterSecureStorage>();
-
     final formData = {'username': email, 'password': password};
 
     try {
       final response = await http.post(Uri.parse("$BASE_URL/token"), body: formData, headers: {'Content-Type': 'application/x-www-form-urlencoded'});
 
-      log('Login response status: ${response.statusCode}');
-      log('Login response body: ${response.body}');
+      log('Login response status: ${response.statusCode}', name: _logTag);
+      log('Login response body: ${response.body}', name: _logTag);
 
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
@@ -31,18 +31,119 @@ class AuthHttpServices {
 
         GetItRegisterer.registerValue<int>(value: userID, name: "user_id");
 
-        await secureStorage.write(key: 'access_token', value: accessToken);
-        await secureStorage.write(key: 'refresh_token', value: refreshToken);
-        await secureStorage.write(key: 'user_id', value: "$userID");
+        await _secureStorage.write(key: 'access_token', value: accessToken);
+        await _secureStorage.write(key: 'refresh_token', value: refreshToken);
+        await _secureStorage.write(key: 'user_id', value: "$userID");
       }
 
       return response.statusCode;
     } on http.ClientException catch (e) {
-      log('HTTP ClientException during login: $e');
-      rethrow;
+      log('HTTP ClientException during login: $e', name: _logTag);
+      throw Exception((e));
     } catch (e, stackTrace) {
-      log('Unexpected error during login: $e', stackTrace: stackTrace);
-      rethrow;
+      log('Unexpected error during login: $e', name: _logTag, stackTrace: stackTrace);
+      throw Exception((e));
+    }
+  }
+
+  /// Performs the primary functionality as defined in the selection.
+  ///
+  /// This function is responsible for executing the main logic or operation
+  /// as intended by the code. It processes the input, applies the necessary
+  /// computations, and returns the result accordingly.
+  ///
+  /// Detailed behavior and parameters should be specified based on the
+  /// actual implementation within the selection.
+  static Future<int> sendEmailOTP({required String email}) async {
+    try {
+      final response = await http.get(Uri.parse("$BASE_URL/verify-email?email=$email"), headers: {'Content-Type': 'application/json'});
+
+      log('OTP response status: ${response.statusCode}', name: _logTag);
+      log('OTP response body: ${response.body}', name: _logTag);
+
+      return response.statusCode;
+    } on http.ClientException catch (e) {
+      log('HTTP ClientException during sendEmailOTP: $e', name: _logTag);
+      return 500;
+    } catch (e, stackTrace) {
+      log('Unexpected error during sendEmailOTP: $e', name: _logTag, stackTrace: stackTrace);
+      return 500;
+    }
+  }
+
+  /// Verifies the OTP sent to the user's email.
+  ///
+  /// Sends a POST request to the server with the email and OTP for verification.
+  /// Returns a `Map<String, dynamic>` containing the response body on success,
+  /// or throws an exception if the request fails.
+  static Future<Map<String, dynamic>> verifyEmailOTP({required String email, required int otp}) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$BASE_URL/verify-otp"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({"email": email, "otp": otp}),
+      );
+
+      log('OTP response status: ${response.statusCode}', name: _logTag);
+      log('OTP response body: ${response.body}', name: _logTag);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception("OTP verification failed: ${error['detail'] ?? 'Unknown error'}");
+      }
+    } on http.ClientException catch (e) {
+      log('HTTP ClientException during verifyEmailOTP: $e', name: _logTag);
+      throw Exception('Network error during OTP verification');
+    } catch (e, stackTrace) {
+      log('Unexpected error during verifyEmailOTP: $e', name: _logTag, stackTrace: stackTrace);
+      throw Exception('Unexpected error during OTP verification');
+    }
+  }
+
+  /// Completes the signup process using a verified email token and password.
+  ///
+  /// Sends a POST request to the server with the `email_hash` (token) and `password`.
+  /// Returns a `Map<String, dynamic>` containing the response body on success,
+  /// or throws an exception if the request fails.
+  static Future<bool> completeSignup({required String emailHash, required String password}) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$BASE_URL/signup"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({"email_hash": emailHash, "password": password}),
+      );
+
+      log('Signup response status: ${response.statusCode}', name: _logTag);
+      log('Signup response body: ${response.body}', name: _logTag);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseBody = jsonDecode(response.body);
+        if (responseBody['status'] == 'success') {
+          final String accessToken = responseBody['access_token'];
+          final String refreshToken = responseBody['refresh_token'];
+          final int userID = responseBody['user_id'];
+
+          GetItRegisterer.registerValue<int>(value: userID, name: "user_id");
+
+          await _secureStorage.write(key: 'access_token', value: accessToken);
+          await _secureStorage.write(key: 'refresh_token', value: refreshToken);
+          await _secureStorage.write(key: 'user_id', value: "$userID");
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception("Signup failed: ${error['detail'] ?? 'Unknown error'}");
+      }
+    } on http.ClientException catch (e) {
+      log('HTTP ClientException during completeSignup: $e', name: _logTag);
+      throw Exception('Network error during signup');
+    } catch (e, stackTrace) {
+      log('Unexpected error during completeSignup: $e', name: _logTag, stackTrace: stackTrace);
+      throw Exception('Unexpected error during signup');
     }
   }
 }

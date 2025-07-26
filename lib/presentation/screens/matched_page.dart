@@ -90,7 +90,7 @@ class _MatchedPageState extends State<MatchedPage> {
                   children: [
                     Center(
                       child: _imageBuilder(
-                        imageUrl: (context.read<ProfileBloc>().state as ProfileLoaded).user.profilePicture,
+                        imageUrl: (context.read<ProfileBloc>().state as ProfileLoaded).user.profilePicture!,
                         offsetX: -_offset,
                         angle: -_rotationAngle,
                       ),

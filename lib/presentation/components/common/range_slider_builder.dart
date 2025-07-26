@@ -38,9 +38,9 @@ class _RangeSliderBuilder extends State<RangeSliderBuilder> {
     return SliderTheme(
       data: SliderTheme.of(context).copyWith(
         activeTrackColor: mainColor,
-        inactiveTrackColor: mainColor.withOpacity(0.3),
+        inactiveTrackColor: mainColor.withValues(alpha: 0.3),
         thumbColor: mainColor,
-        overlayColor: mainColor.withOpacity(0.2),
+        overlayColor: mainColor.withValues(alpha: 0.2),
         rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
         rangeThumbShape: const RoundRangeSliderThumbShape(enabledThumbRadius: 10),
         rangeValueIndicatorShape: const PaddleRangeSliderValueIndicatorShape(),
@@ -51,11 +51,7 @@ class _RangeSliderBuilder extends State<RangeSliderBuilder> {
         min: widget.min,
         max: widget.max,
         divisions: widget.divisions,
-        labels: widget.labels ??
-            RangeLabels(
-              _currentValues.start.round().toString(),
-              _currentValues.end.round().toString(),
-            ),
+        labels: widget.labels ?? RangeLabels(_currentValues.start.round().toString(), _currentValues.end.round().toString()),
         onChanged: (newValues) {
           setState(() {
             _currentValues = newValues;
@@ -64,6 +60,5 @@ class _RangeSliderBuilder extends State<RangeSliderBuilder> {
         },
       ),
     );
-
   }
 }

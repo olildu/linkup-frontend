@@ -3,7 +3,12 @@ class UpdateMetadataModel {
   final String? universityMajor;
   final int? universityYear;
 
+  final String? username;
+  final DateTime? dob;
+  final String? gender;
+
   final String? profilePicture;
+  final List<dynamic>? photos;
 
   final String? about;
 
@@ -13,6 +18,8 @@ class UpdateMetadataModel {
   // Interests
   final int? height;
   final int? weight;
+
+  final String? interestedGender;
 
   final String? religion;
 
@@ -24,6 +31,11 @@ class UpdateMetadataModel {
   UpdateMetadataModel({
     this.universityMajor,
     this.universityYear,
+    this.username,
+    this.dob,
+    this.gender,
+    this.photos,
+    this.interestedGender,
     this.profilePicture,
     this.about,
     this.currentlyStaying,
@@ -40,7 +52,12 @@ class UpdateMetadataModel {
     return UpdateMetadataModel(
       universityMajor: json['university_major'] as String?,
       universityYear: json['university_year'] as int?,
+      username: json['username'] as String?,
+      dob: json['dob'] as DateTime?,
+      gender: json['gender'] as String?,
+      interestedGender: json['interested_gender'] as String?,
       profilePicture: json['profile_picture'] as String?,
+      photos: json['photos'] as List<dynamic>?,
       about: json['about'] as String?,
       currentlyStaying: json['currently_staying'] as String?,
       hometown: json['hometown'] as String?,
@@ -57,6 +74,11 @@ class UpdateMetadataModel {
     return {
       'university_major': universityMajor,
       'university_year': universityYear,
+      'username': username,
+      'dob': dob,
+      'gender': gender,
+      'interested_gender': interestedGender,
+      'photos': photos,
       'profile_picture': profilePicture,
       'about': about,
       'currently_staying': currentlyStaying,

@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:linkup/logic/cubit/theme/theme_cubit.dart';
 import 'package:linkup/presentation/components/common/bullet_point_builder.dart';
 import 'package:linkup/presentation/components/common/image_picker_builder.dart';
+import 'package:linkup/presentation/components/signup_page/city_lookup.dart';
 import 'package:linkup/presentation/components/signup_page/image_builder.dart';
 import 'package:linkup/presentation/components/signup_page/option_builder.dart';
 import 'package:linkup/presentation/components/signup_page/picker_builder_component.dart';
@@ -21,9 +22,7 @@ class SignUpPageFlow {
 
   SignUpPageFlow(this.context, {this.initialData}) {
     _initializeFlow();
-    if (initialData != null) {
-      SignUpDataParser.initialize(context);
-    }
+    SignUpDataParser.initialize(context);
   }
 
   DataValidatorProvider get dataValidatorProvider => Provider.of<DataValidatorProvider>(context, listen: false);
@@ -45,10 +44,11 @@ class SignUpPageFlow {
         'action': TextInput(
           label: "Name",
           placeHolder: "Enter your name",
+          initialValue: 'Balls Mon',
           onChanged: (val) {
             if (val.trim().isNotEmpty) {
               dataValidatorProvider.allowDisallow(true);
-              SignUpDataParser.updateField();
+              SignUpDataParser.updateField(username: val.trim());
             } else {
               dataValidatorProvider.allowDisallow(false);
             }
@@ -62,6 +62,7 @@ class SignUpPageFlow {
           onChanged: (val) {
             Future.delayed(const Duration(milliseconds: 500), () {
               dataValidatorProvider.allowDisallow(true);
+              SignUpDataParser.updateField(dob: val);
             });
           },
         ),
@@ -73,7 +74,7 @@ class SignUpPageFlow {
           options: ["Male", "Female"],
           onChanged: (val) {
             dataValidatorProvider.allowDisallow(true);
-            SignUpDataParser.updateField();
+            SignUpDataParser.updateField(gender: val);
           },
         ),
         'index': 2,
@@ -123,6 +124,28 @@ class SignUpPageFlow {
         'index': 5,
       },
       {
+        'title': PageTitle(inputText: "Where are you currently staying?", highlightWord: "currently"),
+        'action': OptionBuilder(
+          options: ["Campus Hostel", "PG", "Home", "Flat", "Other"],
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(currentlyStaying: val);
+          },
+          currentOption: initialData?["currently_staying"],
+        ),
+        'index': 6,
+      },
+      {
+        'title': PageTitle(inputText: "Where is your hometown? Let us know where you’re from!", highlightWord: "hometown"),
+        'action': CityLookup(
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(hometown: val);
+          },
+        ),
+        'index': 7,
+      },
+      {
         'title': PageTitle(inputText: "Add at least 2 photos so others can see you and put face to name", highlightWord: "photos"),
         'action': SingleChildScrollView(
           child: Column(
@@ -131,7 +154,7 @@ class SignUpPageFlow {
                 onImagesChanged: (p0) {
                   if (p0.isNotEmpty && p0.length >= 2) {
                     dataValidatorProvider.allowDisallow(true);
-                    // SignUpDataParser.updateField(photos: p0);
+                    SignUpDataParser.updateField(photos: p0);
                   } else {
                     dataValidatorProvider.allowDisallow(false);
                   }
@@ -146,13 +169,13 @@ class SignUpPageFlow {
             ],
           ),
         ),
-        'index': 6,
+        'index': 8,
       },
       {
         'title': PageTitle(inputText: "Tell us about yourself. We'd love to know you!", highlightWord: "about"),
         'action': TextInput(
           label: "About",
-          placeHolder: "",
+          placeHolder: "Tell us about yourself",
           onChanged: (val) {
             if (val.isNotEmpty) {
               dataValidatorProvider.allowDisallow(true);
@@ -162,8 +185,9 @@ class SignUpPageFlow {
             }
           },
         ),
-        'index': 7,
+        'index': 9,
       },
+
       {
         'title': PageTitle(inputText: "One last step\nTell us what you love, So we can match you better", highlightWord: ["love", "match"]),
         'action': ImageBuilder(imagePath: "assets/images/like.png", darkMode: themeCubit.isDark),

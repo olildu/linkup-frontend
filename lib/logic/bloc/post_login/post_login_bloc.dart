@@ -39,15 +39,23 @@ class PostLoginBloc extends Bloc<PostLoginEvent, PostLoginState> {
         connectionsBloc.add(LoadConnectionsEvent(showLoading: true));
         connectionsSocketBloc.add(LoadConnectionSocketsEvent());
 
-        await Future.wait([
-          matchesBloc.stream.firstWhere((state) => state is MatchesLoaded || state is MatchesError || state is MatchesEmpty),
-          webSocketBloc.stream.firstWhere((state) => state is WebSocketConnected || state is WebSocketError),
-          chatSocketsBloc.stream.firstWhere((state) => state is ChatSocketsConnected || state is ChatSocketsError),
-          profileBloc.stream.firstWhere((state) => state is ProfileLoaded || state is ProfileError),
-          connectionsSocketBloc.stream.firstWhere((state) => state is ConnectionsSocketsConnected || state is ConnectionsSocketsError),
-        ]);
+        await profileBloc.stream.firstWhere((state) => state is ProfileLoaded || state is ProfileError);
+        
+        // We are checking if the user has completed full sign-up
+        // This will return true if the user has not completed sign-up as there is no university_id = -1
+        final bool goToSignUpPage = (profileBloc.state as ProfileLoaded).user.universityId == -1;
+        if (goToSignUpPage) {
+          emit(PostLoginLoaded(goToSignUpPage: goToSignUpPage));
+        } else {
+          await Future.wait([
+            matchesBloc.stream.firstWhere((state) => state is MatchesLoaded || state is MatchesError || state is MatchesEmpty),
+            webSocketBloc.stream.firstWhere((state) => state is WebSocketConnected || state is WebSocketError),
+            chatSocketsBloc.stream.firstWhere((state) => state is ChatSocketsConnected || state is ChatSocketsError),
+            connectionsSocketBloc.stream.firstWhere((state) => state is ConnectionsSocketsConnected || state is ConnectionsSocketsError),
+          ]);
 
-        emit(PostLoginLoaded());
+          emit(PostLoginLoaded());
+        }
       } catch (e) {
         log("Error during post-login initialization: $e");
         emit(PostLoginError());

@@ -9,4 +9,8 @@ final class PostLoginLoading extends PostLoginState {}
 
 final class PostLoginError extends PostLoginState {}
 
-final class PostLoginLoaded extends PostLoginState {}
+final class PostLoginLoaded extends PostLoginState {
+  final bool goToSignUpPage;
+
+  PostLoginLoaded({this.goToSignUpPage = true});
+}

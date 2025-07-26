@@ -71,7 +71,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               } else if (state is ProfileLoaded) {
                 final UserModel user = state.user;
                 final candidateInformation = CandidateInfoModel.fromUserModel(user);
-                aboutMeContent = user.about;
+                aboutMeContent = user.about!;
 
                 return SingleChildScrollView(
                   child: Column(
@@ -84,7 +84,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         onImagesChanged: (e) {
                           log(e.first.name);
                         },
-                        initialImages: user.photos,
+                        initialImages: user.photos!,
                       ),
 
                       Gap(20.h),

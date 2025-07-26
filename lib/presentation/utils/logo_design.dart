@@ -9,7 +9,6 @@ class DrawingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-
     // The bounding box of your path roughly (0,0) to (110,45)
     const double pathWidth = 110;
     const double pathHeight = 45;
@@ -141,30 +140,32 @@ class DrawingPainter extends CustomPainter {
       animatedPath.addPath(pm.extractPath(0, len), Offset.zero);
     }
 
-      var strokePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..color = Colors.transparent;
+    var strokePaint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8
+          ..color = Colors.transparent;
 
     if (progress.value > 0.01) {
-      strokePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..color = color;
+      strokePaint =
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.8
+            ..color = color;
     }
 
     canvas.drawPath(animatedPath, strokePaint);
 
     if (progress.value > 0.3) {
       double adjustedOpacity = ((progress.value - 0.3) / 0.7).clamp(0.0, 1.0);
-      final fillPaint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = color.withOpacity(adjustedOpacity);
+      final fillPaint =
+          Paint()
+            ..style = PaintingStyle.fill
+            ..color = color.withValues(alpha: adjustedOpacity);
       canvas.drawPath(fullPath, fillPaint);
     }
 
     canvas.restore();
-
   }
 
   @override

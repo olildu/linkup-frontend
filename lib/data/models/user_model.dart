@@ -1,47 +1,47 @@
 class UserModel {
-  final int id; 
+  final int id;
 
-  final String username;
-  final String gender;
+  final String? username;
+  final String? gender;
   final int universityId;
-  final String profilePicture;
+  final String? profilePicture;
 
-  final DateTime dob;
-  final String interestedGender;
+  final DateTime? dob;
+  final String? interestedGender;
 
-  final String universityMajor;
-  final int universityYear;
+  final String? universityMajor;
+  final int? universityYear;
 
-  final List<String> photos;
-  final String about;
+  final List<String>? photos;
+  final String? about;
 
-  final String currentlyStaying; 
-  final String hometown;
+  final String? currentlyStaying;
+  final String? hometown;
 
   final int? height;
   final int? weight;
 
-  final String? religion; 
+  final String? religion;
 
-  final String? smokingInfo; 
+  final String? smokingInfo;
   final String? drinkingInfo;
 
-  final String? lookingFor; 
+  final String? lookingFor;
 
   UserModel({
     required this.id,
-    required this.username,
-    required this.gender,
+    this.username,
+    this.gender,
     required this.universityId,
-    required this.profilePicture,
-    required this.dob,
-    required this.interestedGender,
-    required this.universityMajor,
-    required this.universityYear,
-    required this.photos,
-    required this.about,
-    required this.currentlyStaying,
-    required this.hometown,
+    this.profilePicture,
+    this.dob,
+    this.interestedGender,
+    this.universityMajor,
+    this.universityYear,
+    this.photos,
+    this.about,
+    this.currentlyStaying,
+    this.hometown,
     this.height,
     this.weight,
     this.religion,
@@ -57,11 +57,11 @@ class UserModel {
       gender: json['gender'],
       universityId: json['university_id'],
       profilePicture: json['profile_picture'],
-      dob: DateTime.parse(json['dob']),
+      dob: json['dob'] != null ? DateTime.tryParse(json['dob']) : null,
       interestedGender: json['interested_gender'],
       universityMajor: json['university_major'],
       universityYear: json['university_year'],
-      photos: List<String>.from(json['photos']),
+      photos: json['photos'] != null ? List<String>.from(json['photos']) : [],
       about: json['about'],
       currentlyStaying: json['currently_staying'],
       hometown: json['hometown'],
@@ -81,7 +81,7 @@ class UserModel {
       'gender': gender,
       'university_id': universityId,
       'profile_picture': profilePicture,
-      'dob': dob.toIso8601String(),
+      'dob': dob?.toIso8601String(),
       'interested_gender': interestedGender,
       'university_major': universityMajor,
       'university_year': universityYear,

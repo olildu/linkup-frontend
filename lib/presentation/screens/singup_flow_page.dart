@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/logic/bloc/signup/signup_bloc.dart';
 import 'package:linkup/presentation/components/signup_page/animation_handlers.dart';
 import 'package:linkup/presentation/components/signup_page/progress_bar_component.dart';
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
@@ -10,6 +12,9 @@ import 'package:linkup/presentation/constants/singup_page/flow.dart';
 import 'package:linkup/presentation/screens/match_making_page.dart';
 import 'package:linkup/logic/provider/data_validator_provider.dart';
 import 'package:linkup/data/data_parser/signup_page/data_parser.dart';
+import 'package:linkup/presentation/screens/uploading_overlay.dart';
+import 'package:linkup/presentation/utils/navigate_fade_transistion.dart';
+import 'package:linkup/presentation/utils/show_error_toast.dart';
 import 'package:provider/provider.dart';
 
 class SingupFlowPage extends StatefulWidget {
@@ -23,12 +28,28 @@ class SingupFlowPage extends StatefulWidget {
 }
 
 class _SingupFlowPageState extends State<SingupFlowPage> {
-  int _progressBarIndex = 0;
-
-  late int _currentIndex;
-  late DataValidatorProvider _dataValidatorProvider;
-  late bool _isNextButtonEnabled;
   late SignUpPageFlow _signUpPageFlow;
+  late DataValidatorProvider _dataValidatorProvider;
+  late SignupBloc _signupBloc;
+  late bool _isNextButtonEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _signUpPageFlow = SignUpPageFlow(context, initialData: widget.initialData as Map<String, dynamic>?);
+    _signupBloc = context.read<SignupBloc>();
+    _signupBloc.add(SignupInit(currentIndex: widget.initialIndex, signUpPageFlow: _signUpPageFlow));
+
+    _dataValidatorProvider = Provider.of<DataValidatorProvider>(context, listen: false);
+    _isNextButtonEnabled = _dataValidatorProvider.allowNext;
+    _dataValidatorProvider.addListener(_dataValidatorListener);
+  }
+
+  @override
+  void dispose() {
+    _dataValidatorProvider.removeListener(_dataValidatorListener);
+    super.dispose();
+  }
 
   void _dataValidatorListener() {
     if (mounted) {
@@ -38,35 +59,11 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _signUpPageFlow = SignUpPageFlow(context, initialData: widget.initialData as Map<String, dynamic>?);
-    _dataValidatorProvider = Provider.of<DataValidatorProvider>(context, listen: false);
-    _isNextButtonEnabled = _dataValidatorProvider.allowNext;
-
-    _currentIndex = widget.initialIndex;
-
-    _dataValidatorProvider.addListener(_dataValidatorListener);
-    decideNextButtonState();
-  }
-
-  @override
-  void dispose() {
-    _dataValidatorProvider.removeListener(_dataValidatorListener);
-    super.dispose();
-  }
-
-  void decideNextButtonState() {
-    if (_signUpPageFlow.flow[_currentIndex]["showProgressBar"] != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _dataValidatorProvider.allowDisallow(true);
-      });
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _dataValidatorProvider.allowDisallow(false);
-      });
-    }
+  void decideNextButtonState(int currentIndex) {
+    final step = _signUpPageFlow.flow[currentIndex];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _dataValidatorProvider.allowDisallow(step["showProgressBar"] != null);
+    });
   }
 
   @override
@@ -75,26 +72,81 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              widget.initialData == null && _signUpPageFlow.flow[_currentIndex]["showProgressBar"] == null
-                  ? ProgressBarComponent(currentIndex: _progressBarIndex, totalSteps: 8)
-                  : const SizedBox.shrink(),
+          child: BlocConsumer<SignupBloc, SignupState>(
+            listener: (context, state) {
+              if (state is SingupPhotoUploading) {
+                // During uploading of image show UploadingOverlay for UI/UX
+                navigateWithFade(context, const UploadingOverlay(), allowBack: true);
+              } else if (state is SingupPhotoUploaded) {
+                // Pop Overlay when upload complete
+                Navigator.of(context).pop();
+              } else if (state is SingupPhotoUploadError) {
+                // Show error message and close Overlay
+                showErrorToast(context, state.message);
+                Navigator.of(context).pop();
+              } else if (state is SignupInitial) {
+                // Normal Flow
+                decideNextButtonState(state.currentIndex);
+              }
+            },
+            builder: (context, state) {
+              if (state is SignupInitial) {
+                final currentIndex = state.currentIndex;
+                final progressBarIndex = state.progessBarIndex;
 
-              Gap(20.h),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    widget.initialData == null && _signUpPageFlow.flow[currentIndex]["showProgressBar"] == null
+                        ? ProgressBarComponent(currentIndex: progressBarIndex, totalSteps: 10)
+                        : const SizedBox.shrink(),
 
-              Expanded(
-                child: PageTransitionSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  reverse: false,
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    return SharedAxisTransition(animation: animation, transitionType: SharedAxisTransitionType.horizontal, child: child);
-                  },
-                  child: buildFlowPage(_currentIndex),
-                ),
-              ),
-            ],
+                    Gap(20.h),
+
+                    Expanded(
+                      child: PageTransitionSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return SharedAxisTransition(animation: animation, transitionType: SharedAxisTransitionType.horizontal, child: child);
+                        },
+                        child: buildFlowPage(currentIndex),
+                      ),
+                    ),
+
+                    Gap(20.h),
+
+                    ButtonBuilder(
+                      text: state.buttonText,
+                      onPressed: () {
+                        if (!_isNextButtonEnabled) return;
+
+                        _signupBloc.add(SignupNext(isAtEnd: currentIndex == _signUpPageFlow.flow.length - 1));
+
+                        if (widget.initialData != null) {
+                          SignUpDataParser.updateData(context);
+                        }
+
+                        if (currentIndex == _signUpPageFlow.flow.length - 1) {
+                          if (widget.initialIndex > 0) {
+                            Navigator.pop(context);
+                          } else {
+                            SignUpDataParser.printFormattedData();
+                            Navigator.pushReplacement(context, CupertinoPageRoute(builder: (_) => const MatchMakingPage()));
+                          }
+                        }
+                      },
+                      backgroundColor: _isNextButtonEnabled ? AppColors.primary : AppColors.notSelected,
+                      textColor: Colors.white,
+                      isFullWidth: true,
+                      height: 65.h,
+                      borderRadius: 15.r,
+                    ),
+                  ],
+                );
+              }
+
+              return const Center(child: CircularProgressIndicator());
+            },
           ),
         ),
       ),
@@ -107,69 +159,15 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: FadeTransition(opacity: AlwaysStoppedAnimation(1), child: _signUpPageFlow.flow[index]["title"]),
-          ),
-
+          AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: _signUpPageFlow.flow[index]["title"]),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               switchInCurve: Curves.easeInOutCubic,
               switchOutCurve: Curves.easeInOutCubic,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: ScaleTransition(scale: animation, child: child));
-              },
+              transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: ScaleTransition(scale: animation, child: child)),
               child: KeyedSubtree(key: ValueKey('action_$index'), child: _signUpPageFlow.flow[index]["action"]),
             ),
-          ),
-
-          Gap(20.h),
-
-          ButtonBuilder(
-            text: _currentIndex < _signUpPageFlow.flow.length - 1 ? "Next" : "Finish",
-            onPressed: () {
-              if (!_isNextButtonEnabled) {
-                return;
-              }
-
-              setState(() {
-                // This will run when we press next
-                if (_currentIndex < _signUpPageFlow.flow.length - 1) {
-                  _currentIndex++;
-                  if (_signUpPageFlow.flow[_currentIndex]["showProgressBar"] == null) {
-                    _progressBarIndex = _signUpPageFlow.flow[_currentIndex]["index"];
-                  }
-
-                  if (widget.initialData != null) {
-                    SignUpDataParser.updateData(context);
-                  }
-                }
-                // This will run when we press finish
-                else {
-                  // This means we know that update is happening
-                  if (widget.initialData != null) {
-                    SignUpDataParser.updateData(context);
-                    // This means we know that user registration is happening
-                  } else {
-                    SignUpDataParser.printFormattedData();
-                  }
-                  if (widget.initialIndex > 0) {
-                    Navigator.pop(context);
-                  } else {
-                    Navigator.pushReplacement(context, CupertinoPageRoute(builder: (context) => const MatchMakingPage()));
-                  }
-                }
-                decideNextButtonState();
-              });
-
-              decideNextButtonState();
-            },
-            backgroundColor: _isNextButtonEnabled ? AppColors.primary : AppColors.notSelected,
-            textColor: Colors.white,
-            isFullWidth: true,
-            height: 65.h,
-            borderRadius: 15.r,
           ),
         ],
       ),

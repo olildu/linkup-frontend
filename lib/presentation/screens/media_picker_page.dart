@@ -179,7 +179,7 @@ class MediaPickerPage extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: Colors.white,
-                                      boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.6), blurRadius: 10, spreadRadius: 1)],
+                                      boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.6), blurRadius: 10, spreadRadius: 1)],
                                     ),
                                     child: Center(
                                       child: Container(

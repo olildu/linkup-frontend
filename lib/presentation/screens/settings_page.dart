@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/data/token/token_services.dart';
 import 'package:linkup/logic/cubit/theme/theme_cubit.dart';
+import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/presentation/constants/colors.dart';
+import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -40,32 +43,66 @@ class _ProfileSettingsPageState extends State<SettingsPage> {
           body: SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTitleSubtitle('Appearance', 'Customize your theme settings'),
-                    Gap(20.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTitleSubtitle('Appearance', 'Customize your theme settings'),
+                  Gap(20.h),
 
-                    _buildOption(
-                      icon: Icons.dark_mode_rounded,
-                      title: themeMode == ThemeMode.dark ? 'Disable Dark Mode' : 'Enable Dark Mode',
-                      onTap: (bool value) {
-                        context.read<ThemeCubit>().toggleTheme();
-                      },
-                      value: themeMode == ThemeMode.dark,
-                    ),
+                  _buildOption(
+                    icon: Icons.dark_mode_rounded,
+                    title: themeMode == ThemeMode.dark ? 'Disable Dark Mode' : 'Enable Dark Mode',
+                    onTap: (bool value) {
+                      context.read<ThemeCubit>().toggleTheme();
+                    },
+                    value: themeMode == ThemeMode.dark,
+                  ),
 
-                    _buildOption(icon: Icons.visibility_off_rounded, title: 'Hide Online Status', onTap: (bool value) {}, value: false),
+                  _buildOption(icon: Icons.visibility_off_rounded, title: 'Hide Online Status', onTap: (bool value) {}, value: false),
 
-                    _buildOption(icon: Icons.visibility_off_rounded, title: 'Hide Online Status', onTap: (bool value) {}, value: false),
-                  ],
-                ),
+                  Spacer(),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStrongOption(
+                          textColor: AppColors.primary,
+                          title: "Logout",
+                          onTap: () async {
+                            await TokenServices().clearTokens();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()),
+                              (Route<dynamic> route) => false,
+                            );
+                          },
+                        ),
+                      ),
+                      Gap(10.w),
+                      Expanded(child: _buildStrongOption(textColor: Colors.red, title: "Delete Account")),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStrongOption({required String title, required Color textColor, Function? onTap}) {
+    return ButtonBuilder(
+      text: title,
+      onPressed: () {
+        if (onTap != null) {
+          onTap();
+        }
+      },
+      backgroundColor: const Color.fromARGB(255, 35, 35, 35),
+      textColor: textColor,
+      isFullWidth: true,
+      borderRadius: 50.r,
+      height: 40.h,
     );
   }
 

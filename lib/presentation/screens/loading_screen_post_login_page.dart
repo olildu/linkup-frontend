@@ -1,12 +1,17 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/data/token/token_services.dart';
 import 'package:linkup/logic/bloc/post_login/post_login_bloc.dart';
+import 'package:linkup/logic/bloc/signup/signup_bloc.dart';
 import 'package:linkup/presentation/screens/landing_page.dart';
 import 'package:linkup/presentation/screens/match_making_page.dart';
+import 'package:linkup/presentation/screens/singup_flow_page.dart';
 
 import 'package:linkup/presentation/utils/logo_design.dart';
+import 'package:linkup/presentation/utils/navigate_fade_transistion.dart';
 
 class LoadingScreenPostLogin extends StatefulWidget {
   const LoadingScreenPostLogin({super.key});
@@ -51,29 +56,25 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
     });
   }
 
-  void _navigateWithFade(Widget page) {
-    Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => page,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-      (route) => false,
-    );
-  }
-
   void _tryNavigate() {
     if (!tokenCheckDone) return;
+    final postLoginState = context.read<PostLoginBloc>().state;
 
-    if (loggedIn) {
-      if (animationCompleted && loadingComplete) {
-        _navigateWithFade(const MatchMakingPage());
+    if (loggedIn && postLoginState is PostLoginLoaded) {
+      final goToSignUpPage = postLoginState.goToSignUpPage;
+
+      if (goToSignUpPage) {
+        if (animationCompleted && loadingComplete) {
+          navigateWithFade(context, BlocProvider(create: (context) => SignupBloc(), child: const SingupFlowPage(initialIndex: -1)));
+        }
+      } else {
+        if (animationCompleted && loadingComplete) {
+          navigateWithFade(context, const MatchMakingPage());
+        }
       }
     } else {
       if (animationCompleted) {
-        _navigateWithFade(const LandingPage());
+        navigateWithFade(context, const LandingPage());
       }
     }
   }
