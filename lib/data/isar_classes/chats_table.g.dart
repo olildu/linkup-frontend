@@ -32,9 +32,9 @@ const ChatsTableSchema = CollectionSchema(
       name: r'message',
       type: IsarType.string,
     ),
-    r'profilePicture': PropertySchema(
+    r'profilePictureMetaDataJson': PropertySchema(
       id: 3,
-      name: r'profilePicture',
+      name: r'profilePictureMetaDataJson',
       type: IsarType.string,
     ),
     r'unseenCounter': PropertySchema(
@@ -74,7 +74,7 @@ int _chatsTableEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
-  bytesCount += 3 + object.profilePicture.length * 3;
+  bytesCount += 3 + object.profilePictureMetaDataJson.length * 3;
   bytesCount += 3 + object.username.length * 3;
   return bytesCount;
 }
@@ -88,7 +88,7 @@ void _chatsTableSerialize(
   writer.writeLong(offsets[0], object.chatID);
   writer.writeLong(offsets[1], object.chatRoomId);
   writer.writeString(offsets[2], object.message);
-  writer.writeString(offsets[3], object.profilePicture);
+  writer.writeString(offsets[3], object.profilePictureMetaDataJson);
   writer.writeLong(offsets[4], object.unseenCounter);
   writer.writeString(offsets[5], object.username);
 }
@@ -104,7 +104,7 @@ ChatsTable _chatsTableDeserialize(
   object.chatRoomId = reader.readLong(offsets[1]);
   object.id = id;
   object.message = reader.readStringOrNull(offsets[2]);
-  object.profilePicture = reader.readString(offsets[3]);
+  object.profilePictureMetaDataJson = reader.readString(offsets[3]);
   object.unseenCounter = reader.readLong(offsets[4]);
   object.username = reader.readString(offsets[5]);
   return object;
@@ -536,13 +536,13 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureEqualTo(
+      profilePictureMetaDataJsonEqualTo(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -550,7 +550,7 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureGreaterThan(
+      profilePictureMetaDataJsonGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -558,7 +558,7 @@ extension ChatsTableQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -566,7 +566,7 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureLessThan(
+      profilePictureMetaDataJsonLessThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -574,7 +574,7 @@ extension ChatsTableQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -582,7 +582,7 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureBetween(
+      profilePictureMetaDataJsonBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -591,7 +591,7 @@ extension ChatsTableQueryFilter
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -602,13 +602,13 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureStartsWith(
+      profilePictureMetaDataJsonStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -616,13 +616,13 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureEndsWith(
+      profilePictureMetaDataJsonEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -630,10 +630,11 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureContains(String value, {bool caseSensitive = true}) {
+      profilePictureMetaDataJsonContains(String value,
+          {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -641,10 +642,11 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureMatches(String pattern, {bool caseSensitive = true}) {
+      profilePictureMetaDataJsonMatches(String pattern,
+          {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         wildcard: pattern,
         caseSensitive: caseSensitive,
       ));
@@ -652,20 +654,20 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureIsEmpty() {
+      profilePictureMetaDataJsonIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: '',
       ));
     });
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
-      profilePictureIsNotEmpty() {
+      profilePictureMetaDataJsonIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'profilePicture',
+        property: r'profilePictureMetaDataJson',
         value: '',
       ));
     });
@@ -906,16 +908,17 @@ extension ChatsTableQuerySortBy
     });
   }
 
-  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> sortByProfilePicture() {
+  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy>
+      sortByProfilePictureMetaDataJson() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profilePicture', Sort.asc);
+      return query.addSortBy(r'profilePictureMetaDataJson', Sort.asc);
     });
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy>
-      sortByProfilePictureDesc() {
+      sortByProfilePictureMetaDataJsonDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profilePicture', Sort.desc);
+      return query.addSortBy(r'profilePictureMetaDataJson', Sort.desc);
     });
   }
 
@@ -994,16 +997,17 @@ extension ChatsTableQuerySortThenBy
     });
   }
 
-  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> thenByProfilePicture() {
+  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy>
+      thenByProfilePictureMetaDataJson() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profilePicture', Sort.asc);
+      return query.addSortBy(r'profilePictureMetaDataJson', Sort.asc);
     });
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy>
-      thenByProfilePictureDesc() {
+      thenByProfilePictureMetaDataJsonDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profilePicture', Sort.desc);
+      return query.addSortBy(r'profilePictureMetaDataJson', Sort.desc);
     });
   }
 
@@ -1053,10 +1057,10 @@ extension ChatsTableQueryWhereDistinct
     });
   }
 
-  QueryBuilder<ChatsTable, ChatsTable, QDistinct> distinctByProfilePicture(
-      {bool caseSensitive = true}) {
+  QueryBuilder<ChatsTable, ChatsTable, QDistinct>
+      distinctByProfilePictureMetaDataJson({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'profilePicture',
+      return query.addDistinctBy(r'profilePictureMetaDataJson',
           caseSensitive: caseSensitive);
     });
   }
@@ -1101,9 +1105,10 @@ extension ChatsTableQueryProperty
     });
   }
 
-  QueryBuilder<ChatsTable, String, QQueryOperations> profilePictureProperty() {
+  QueryBuilder<ChatsTable, String, QQueryOperations>
+      profilePictureMetaDataJsonProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'profilePicture');
+      return query.addPropertyName(r'profilePictureMetaDataJson');
     });
   }
 

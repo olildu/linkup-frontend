@@ -18,6 +18,8 @@ import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/presentation/components/signup_page/page_title_builder_component.dart';
 import 'package:linkup/presentation/screens/chat_page.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 
 class MatchedPage extends StatefulWidget {
   final MatchesConnectionModel matchUser;
@@ -90,12 +92,12 @@ class _MatchedPageState extends State<MatchedPage> {
                   children: [
                     Center(
                       child: _imageBuilder(
-                        imageUrl: (context.read<ProfileBloc>().state as ProfileLoaded).user.profilePicture!,
+                        imageMetaData: (context.read<ProfileBloc>().state as ProfileLoaded).user.profilePicture!,
                         offsetX: -_offset,
                         angle: -_rotationAngle,
                       ),
                     ),
-                    _imageBuilder(imageUrl: widget.matchUser.profilePicture, offsetX: _offset, angle: _rotationAngle),
+                    _imageBuilder(imageMetaData: widget.matchUser.profilePictureMetaData, offsetX: _offset, angle: _rotationAngle),
                   ],
                 ),
                 Gap(50.h),
@@ -134,7 +136,7 @@ class _MatchedPageState extends State<MatchedPage> {
                                     currentChatUserId: widget.matchUser.id,
                                     currentUserId: currentUserId,
                                     userName: widget.matchUser.username,
-                                    userImage: widget.matchUser.profilePicture,
+                                    userImageMetaData: widget.matchUser.profilePictureMetaData,
                                     chatRoomId: response["chat_room_id"],
                                   ),
                                 ),
@@ -157,18 +159,23 @@ class _MatchedPageState extends State<MatchedPage> {
     );
   }
 
-  Widget _imageBuilder({required String imageUrl, required double offsetX, required double angle}) {
+  Widget _imageBuilder({required Map imageMetaData, required double offsetX, required double angle}) {
+    final String url = imageMetaData["url"];
+    final String blurhash = imageMetaData["blurhash"];
+
     return Transform.translate(
       offset: Offset(offsetX, 0),
       child: Transform.rotate(
         angle: angle,
-        child: Container(
-          width: _imageWidth,
-          height: _imageHeight,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.r),
-            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8, offset: const Offset(4, 4))],
-            image: DecorationImage(image: CachedNetworkImageProvider(imageUrl), fit: BoxFit.cover),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20.r),
+          child: OctoImage(
+            image: CachedNetworkImageProvider(url),
+            placeholderBuilder: blurHash(blurhash).placeholderBuilder,
+            errorBuilder: OctoError.icon(color: Colors.red),
+            fit: BoxFit.cover,
+            width: _imageWidth,
+            height: _imageHeight,
           ),
         ),
       ),

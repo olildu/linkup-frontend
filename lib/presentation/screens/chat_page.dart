@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,6 +23,8 @@ import 'package:linkup/presentation/components/chat_page/sending_animation.dart'
 import 'package:linkup/presentation/components/chat_page/swipe_wrapper.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/screens/user_profile_bottom_sheet.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 import 'package:uuid/v4.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -31,7 +32,7 @@ class ChatPage extends StatefulWidget {
   final int currentChatUserId;
   final int currentUserId;
   final String userName;
-  final String userImage;
+  final Map userImageMetaData;
   final int chatRoomId;
 
   const ChatPage({
@@ -39,7 +40,7 @@ class ChatPage extends StatefulWidget {
     required this.currentChatUserId,
     required this.currentUserId,
     required this.userName,
-    required this.userImage,
+    required this.userImageMetaData,
     required this.chatRoomId,
   });
 
@@ -223,12 +224,15 @@ class _ChatPageState extends State<ChatPage> {
               if (!isSentByMe && (groupInfo.isLastInGroup || groupInfo.isOnlyMessageInGroup)) ...[
                 Padding(
                   padding: EdgeInsets.only(right: 13.w, bottom: 2.h),
-                  child: CircleAvatar(
-                    radius: 15.r,
-                    backgroundImage: CachedNetworkImageProvider(widget.userImage),
-                    onBackgroundImageError: (exception, stackTrace) {
-                      log('Error loading image: $exception');
-                    },
+                  child: ClipOval(
+                    child: OctoImage(
+                      image: CachedNetworkImageProvider(widget.userImageMetaData["url"]),
+                      placeholderBuilder: blurHash(widget.userImageMetaData["blurhash"]).placeholderBuilder,
+                      errorBuilder: OctoError.icon(color: Colors.red),
+                      fit: BoxFit.cover,
+                      width: 30.r,
+                      height: 30.r,
+                    ),
                   ),
                 ),
               ] else if (!isSentByMe) ...[
@@ -303,13 +307,16 @@ class _ChatPageState extends State<ChatPage> {
           },
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 15.r,
-                backgroundImage: CachedNetworkImageProvider(widget.userImage),
-                onBackgroundImageError: (exception, stackTrace) {
-                  log('Error loading image: $exception');
-                },
+              ClipOval(
+                child: OctoImage(
+                  image: CachedNetworkImageProvider(widget.userImageMetaData['url']),
+                  placeholderBuilder: blurHash(widget.userImageMetaData['blurhash']).placeholderBuilder,
+                  fit: BoxFit.cover,
+                  width: 30.r,
+                  height: 30.r,
+                ),
               ),
+
               Gap(10.w),
               Text(widget.userName, style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
             ],
@@ -370,7 +377,7 @@ class _ChatPageState extends State<ChatPage> {
                           if (state.isTyping) {
                             return FadeTransition(
                               opacity: animation,
-                              child: buildTypingIndicator(context: context, userImage: widget.userImage, userName: widget.userName),
+                              child: buildTypingIndicator(context: context, imageMetaData: widget.userImageMetaData, userName: widget.userName),
                             );
                           } else {
                             return const SizedBox.shrink();

@@ -4,7 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:linkup/presentation/components/login/text_input_field.dart';
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/data/http_services/auth_http_services/auth_http_services.dart';
-import 'package:linkup/presentation/utils/scaffold_message_display.dart';
+import 'package:linkup/presentation/utils/show_error_toast.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
           _hasError = true;
         });
 
-        showScaffoldMessage(context: context, message: 'Invalid email or password', backgroundColor: Colors.red, textColor: Colors.white);
+        showErrorToast(context, 'Invalid email or password');
 
         break;
       default:

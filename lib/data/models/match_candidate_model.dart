@@ -3,7 +3,7 @@ class MatchCandidateModel {
   final String username;
   final String gender; // "Male" or "Female"
   final int universityId;
-  final String profilePicture;
+  final Map profilePictureMetaData;
 
   final DateTime dob;
 
@@ -31,7 +31,7 @@ class MatchCandidateModel {
     required this.username,
     required this.gender,
     required this.universityId,
-    required this.profilePicture,
+    required this.profilePictureMetaData,
     required this.dob,
     required this.universityMajor,
     required this.universityYear,
@@ -53,7 +53,7 @@ class MatchCandidateModel {
       username: json['username'] as String,
       gender: json['gender'] as String,
       universityId: json['university_id'] as int,
-      profilePicture: json['profile_picture'] as String,
+      profilePictureMetaData: json['profile_picture'] as Map,
       dob: DateTime.parse(json['dob'] as String),
       universityMajor: json['university_major'] as String,
       universityYear: json['university_year'] as int,
@@ -75,7 +75,7 @@ class MatchCandidateModel {
       'username': username,
       'gender': gender,
       'university_id': universityId,
-      'profile_picture': profilePicture,
+      'profile_picture': profilePictureMetaData,
       'dob': dob.toIso8601String(),
       'university_major': universityMajor,
       'university_year': universityYear,

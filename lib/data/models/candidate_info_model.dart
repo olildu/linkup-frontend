@@ -82,7 +82,8 @@ class CandidateInfoModel {
       'gender': gender,
       'currently_staying': currentlyStaying,
       'hometown': hometown,
-    }..removeWhere((key, value) => value == null);
+    };
+    // }..removeWhere((key, value) => value == null);
   }
 
   Map<String, Map<String, dynamic>> asIconMap({bool showGender = true, bool showLocationInfo = true}) {
@@ -94,21 +95,21 @@ class CandidateInfoModel {
 
     if (showLocationInfo) {
       map.addAll({
-        'currently_staying': {'icon': Icons.location_city_rounded, 'value': currentlyStaying, 'index': 16, 'title': "Currently Staying"},
-        'hometown': {'icon': Icons.home_rounded, 'value': hometown, 'index': 17, 'title': "Hometown"},
+        'currently_staying': {'icon': Icons.location_city_rounded, 'value': currentlyStaying, 'index': -1, 'title': "Currently Staying"},
+        'hometown': {'icon': Icons.home_rounded, 'value': hometown, 'index': 0, 'title': "Hometown"},
       });
     }
 
     map.addAll({
-      'height': {'icon': Icons.straighten_rounded, 'value': height != null ? '$height cm' : null, 'index': 10, 'title': "Height"},
-      'weight': {'icon': Icons.monitor_weight, 'value': weight != null ? '$weight kg' : null, 'index': 11, 'title': "Weight"},
-      'religion': {'icon': Icons.church_rounded, 'value': religion, 'index': 12, 'title': "Religion"},
-      'smoking': {'icon': Icons.smoking_rooms_rounded, 'value': smokingInfo, 'index': 13, 'title': "Smoking"},
-      'drinking': {'icon': Icons.local_bar_rounded, 'value': drinkingInfo, 'index': 14, 'title': "Drinking"},
-      'looking_for': {'icon': Icons.favorite_outline_rounded, 'value': lookingFor, 'index': 15, 'title': "Looking For"},
+      'height': {'icon': Icons.straighten_rounded, 'value': height != null ? '$height cm' : null, 'index': 1, 'title': "Height"},
+      'weight': {'icon': Icons.monitor_weight, 'value': weight != null ? '$weight kg' : null, 'index': 2, 'title': "Weight"},
+      'religion': {'icon': Icons.church_rounded, 'value': religion, 'index': 3, 'title': "Religion"},
+      'smoking': {'icon': Icons.smoking_rooms_rounded, 'value': smokingInfo, 'index': 4, 'title': "Smoking"},
+      'drinking': {'icon': Icons.local_bar_rounded, 'value': drinkingInfo, 'index': 5, 'title': "Drinking"},
+      'looking_for': {'icon': Icons.favorite_outline_rounded, 'value': lookingFor, 'index': 6, 'title': "Looking For"},
     });
 
-    map.removeWhere((key, item) => item['value'] == null);
+    // map.removeWhere((key, item) => item['value'] == null);
     return map;
   }
 }

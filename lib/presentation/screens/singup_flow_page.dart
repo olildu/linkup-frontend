@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,12 +8,13 @@ import 'package:linkup/presentation/components/signup_page/progress_bar_componen
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/constants/singup_page/flow.dart';
-import 'package:linkup/presentation/screens/match_making_page.dart';
+import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/logic/provider/data_validator_provider.dart';
 import 'package:linkup/data/data_parser/signup_page/data_parser.dart';
 import 'package:linkup/presentation/screens/uploading_overlay.dart';
 import 'package:linkup/presentation/utils/navigate_fade_transistion.dart';
 import 'package:linkup/presentation/utils/show_error_toast.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 class SingupFlowPage extends StatefulWidget {
@@ -66,6 +66,50 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
     });
   }
 
+  void _manageFlow(SignupState state) {
+    if (state is SingupPhotoUploading) {
+      // During uploading of image show UploadingOverlay for UI/UX
+      navigateWithFade(context, const CustomOverlay(text: "Uploading", backgroundColor: AppColors.primary, textColor: Colors.white), allowBack: true);
+    } else if (state is SingupPhotoUploaded) {
+      // Pop Overlay when upload complete
+      Navigator.of(context).pop();
+    } else if (state is SingupPhotoUploadError) {
+      // Show error message and close Overlay
+      showErrorToast(context, state.message);
+      Navigator.of(context).pop();
+    } else if (state is SignupInitial) {
+      // Normal Flow
+      decideNextButtonState(state.currentIndex);
+    } else if (state is SingupUploading) {
+      bool uploadComplete = state.uploadComplete;
+      // Final animation to indicate uploading
+      navigateWithFade(
+        context,
+        CustomOverlay(
+          iconOrLoader:
+              uploadComplete
+                  ? LottieBuilder.asset('assets/animations/done.json', fit: BoxFit.contain, repeat: false)
+                  : LottieBuilder.asset(
+                    Theme.of(context).brightness == Brightness.dark ? 'assets/animations/upload-dark.json' : 'assets/animations/upload-light.json',
+                    fit: BoxFit.contain,
+                  ),
+          iconSize: uploadComplete ? Size(400.w, 400.h) : Size(400.w, 200.h),
+          text: uploadComplete ? "You are all set " : "Uploading you to the clouds",
+        ),
+        allowBack: true,
+      );
+    } else if (state is SingupUploaded) {
+      // After success go for token validation
+      navigateWithFade(context, const LoadingScreenPostLogin(), allowBack: true);
+    } else if (state is UpdateComplete) {
+      // Pop in case of completed updation
+      Navigator.of(context).pop();
+    } else if (state is SingupUploadError) {
+      showErrorToast(context, state.message);
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,20 +118,7 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
           child: BlocConsumer<SignupBloc, SignupState>(
             listener: (context, state) {
-              if (state is SingupPhotoUploading) {
-                // During uploading of image show UploadingOverlay for UI/UX
-                navigateWithFade(context, const UploadingOverlay(), allowBack: true);
-              } else if (state is SingupPhotoUploaded) {
-                // Pop Overlay when upload complete
-                Navigator.of(context).pop();
-              } else if (state is SingupPhotoUploadError) {
-                // Show error message and close Overlay
-                showErrorToast(context, state.message);
-                Navigator.of(context).pop();
-              } else if (state is SignupInitial) {
-                // Normal Flow
-                decideNextButtonState(state.currentIndex);
-              }
+              _manageFlow(state);
             },
             builder: (context, state) {
               if (state is SignupInitial) {
@@ -120,19 +151,10 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
                       onPressed: () {
                         if (!_isNextButtonEnabled) return;
 
-                        _signupBloc.add(SignupNext(isAtEnd: currentIndex == _signUpPageFlow.flow.length - 1));
+                        _signupBloc.add(SignupNext());
 
                         if (widget.initialData != null) {
                           SignUpDataParser.updateData(context);
-                        }
-
-                        if (currentIndex == _signUpPageFlow.flow.length - 1) {
-                          if (widget.initialIndex > 0) {
-                            Navigator.pop(context);
-                          } else {
-                            SignUpDataParser.printFormattedData();
-                            Navigator.pushReplacement(context, CupertinoPageRoute(builder: (_) => const MatchMakingPage()));
-                          }
                         }
                       },
                       backgroundColor: _isNextButtonEnabled ? AppColors.primary : AppColors.notSelected,

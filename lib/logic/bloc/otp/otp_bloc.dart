@@ -64,7 +64,7 @@ class OtpBloc extends Bloc<OtpBlocEvent, OtpBlocState> {
     emit(OTPPasswordLoading());
 
     try {
-      final result = await AuthHttpServices.completeSignup(emailHash: emailHash, password: event.password);
+      final result = await AuthHttpServices.completeSignupCreds(emailHash: emailHash, password: event.password);
 
       if (result) {
         log('Account created successfully', name: _logTag);

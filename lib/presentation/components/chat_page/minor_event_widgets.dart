@@ -1,12 +1,13 @@
-import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:linkup/presentation/components/chat_page/event_intro_animation.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 
-Widget buildTypingIndicator({required BuildContext context, required String userImage, required String userName}) {
+Widget buildTypingIndicator({required BuildContext context, required Map imageMetaData, required String userName}) {
   final Radius largeRadius = Radius.circular(20.r);
 
   final BorderRadius messageBorderRadius = BorderRadius.only(
@@ -24,13 +25,16 @@ Widget buildTypingIndicator({required BuildContext context, required String user
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        CircleAvatar(
-          radius: 15.r,
-          backgroundImage: CachedNetworkImageProvider(userImage),
-          onBackgroundImageError: (exception, stackTrace) {
-            log('Error loading image: $exception');
-          },
+        ClipOval(
+          child: OctoImage(
+            image: CachedNetworkImageProvider(imageMetaData['url']),
+            placeholderBuilder: blurHash(imageMetaData['blurhash']).placeholderBuilder,
+            fit: BoxFit.cover,
+            width: 30.r,
+            height: 30.r,
+          ),
         ),
+
         Gap(8.w),
         Container(
           constraints: BoxConstraints(maxWidth: 0.75.sw),

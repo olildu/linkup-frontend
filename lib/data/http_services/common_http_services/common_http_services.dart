@@ -7,7 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkup/data/enums/message_type_enum.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
-import 'package:http_parser/http_parser.dart'; // add this if not already
+// add this if not already
 
 class CommonHttpServices {
   final FlutterSecureStorage _secureStorage = GetIt.instance<FlutterSecureStorage>();
@@ -61,7 +61,6 @@ class CommonHttpServices {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonData = json.decode(response.body);
-      log('[uploadMediaUser] Success: $jsonData');
       return jsonData;
     } else {
       log('[uploadMediaUser] Error ${response.statusCode}: ${response.body}');

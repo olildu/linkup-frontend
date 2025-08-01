@@ -1,19 +1,19 @@
 class MatchesConnectionModel {
   final int id;
   final String username;
-  final String profilePicture;
+  final Map profilePictureMetaData;
 
   MatchesConnectionModel({
     required this.id,
     required this.username,
-    required this.profilePicture,
+    required this.profilePictureMetaData,
   });
 
   factory MatchesConnectionModel.fromJson(Map<String, dynamic> json) {
     return MatchesConnectionModel(
       id: json['id'],
       username: json['username'],
-      profilePicture: json['profile_picture'],
+      profilePictureMetaData: json['profile_picture'],
     );
   }
 }

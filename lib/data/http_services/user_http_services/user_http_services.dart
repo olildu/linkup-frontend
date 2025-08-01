@@ -23,7 +23,7 @@ class UserHttpServices {
       return UserModel.fromJson(jsonData);
     } else {
       print('Error: ${response.statusCode}');
-      throw Exception('Failed to fetch matches. Status: ${response.statusCode} Server-Response: ${response.body}');
+      throw Exception('Failed to fetch. Status: ${response.statusCode} Server-Response: ${response.body}');
     }
   }
 
@@ -38,7 +38,7 @@ class UserHttpServices {
       return MatchCandidateModel.fromJson(jsonData);
     } else {
       print('Error: ${response.statusCode}');
-      throw Exception('Failed to fetch matches. Status: ${response.statusCode} Server-Response: ${response.body}');
+      throw Exception('Failed to fetch. Status: ${response.statusCode} Server-Response: ${response.body}');
     }
   }
 
@@ -52,7 +52,7 @@ class UserHttpServices {
       return UserPreferenceModel.fromJson(jsonData);
     } else {
       print('Error: ${response.statusCode}');
-      throw Exception('Failed to fetch matches. Status: ${response.statusCode} Server-Response: ${response.body}');
+      throw Exception('Failed to fetch. Status: ${response.statusCode} Server-Response: ${response.body}');
     }
   }
 
@@ -72,7 +72,7 @@ class UserHttpServices {
       log('User preferences updated successfully: $jsonData');
     } else {
       print('Error: ${response.statusCode}');
-      throw Exception('Failed to fetch matches. Status: ${response.statusCode} Server-Response: ${response.body}');
+      throw Exception('Failed to fetch. Status: ${response.statusCode} Server-Response: ${response.body}');
     }
   }
 
@@ -80,6 +80,8 @@ class UserHttpServices {
     final accessToken = await _secureStorage.read(key: 'access_token');
 
     var body = userUpdatedModel.toJson();
+
+    print(json.encode(body));
 
     final response = await http.post(
       Uri.parse("$BASE_URL/user/update/metadata"),
@@ -92,7 +94,7 @@ class UserHttpServices {
       log('User preferences updated successfully: $jsonData');
     } else {
       log('Error: ${response.statusCode}');
-      throw Exception('Failed to fetch matches. Status: ${response.statusCode} Server-Response: ${response.body}');
+      throw Exception('Failed to fetch. Status: ${response.statusCode} Server-Response: ${response.body}');
     }
   }
 }

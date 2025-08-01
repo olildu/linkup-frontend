@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -15,18 +16,27 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
   int _currentIndex = 0;
   int _progressBarIndex = 0;
 
-  SignupBloc() : super(SignupInitial(currentIndex: 0, progessBarIndex: 0)) {
+  final bool isSigningUp;
+
+  SignupBloc({this.isSigningUp = true}) : super(SignupInitial(currentIndex: 0, progessBarIndex: 0)) {
     on<SignupInit>((event, emit) async {
       _signUpPageFlow = event.signUpPageFlow;
       _currentIndex = event.currentIndex;
 
-      add(SignupNext(isAtEnd: _currentIndex == _signUpPageFlow.flow.length - 1));
+      add(SignupNext());
     });
 
     on<SignupNext>((event, emit) async {
-      print(_currentIndex);
       if (_currentIndex == 9) {
         await _uploadPhotos(emit);
+        return;
+      }
+
+      bool isAtEnd = _currentIndex == _signUpPageFlow.flow.length - 1;
+
+      // User at end complete upload
+      if (isAtEnd) {
+        add(SignupUpload());
         return;
       }
 
@@ -35,18 +45,46 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
         _progressBarIndex = _signUpPageFlow.flow[_currentIndex]["index"];
       }
 
-      if (_currentIndex > 11 && !event.isAtEnd) {
+      if (_currentIndex > 11 && !isAtEnd) {
         emit(SignupInitial(buttonText: "Skip", currentIndex: _currentIndex, progessBarIndex: _progressBarIndex));
       } else if (_currentIndex == 9) {
         emit(SignupInitial(buttonText: "Upload Photos", currentIndex: _currentIndex, progessBarIndex: _progressBarIndex));
-      } else {
-        emit(SignupInitial(buttonText: event.isAtEnd ? "Finish" : "Next", currentIndex: _currentIndex, progessBarIndex: _progressBarIndex));
+      } else if (!isAtEnd) {
+        emit(SignupInitial(buttonText: "Next", currentIndex: _currentIndex, progessBarIndex: _progressBarIndex));
+      }
+    });
+
+    on<SignupOptionalFilled>((event, emit) async {
+      if (_currentIndex > 11) {
+        bool isAtEnd = _currentIndex == _signUpPageFlow.flow.length - 1;
+        emit(SignupInitial(buttonText: isAtEnd ? "Finish" : "Next", currentIndex: _currentIndex, progessBarIndex: _progressBarIndex));
+      }
+    });
+
+    on<SignupUpload>((event, emit) async {
+      try {
+        if (!isSigningUp) {
+          emit(UpdateComplete());
+          return;
+        }
+
+        emit(SingupUploading());
+        // Submit
+        await SignUpDataParser.submitRegistration();
+        await Future.delayed(Duration(seconds: 2));
+        // Show Animation
+        emit(SingupUploading(uploadComplete: true));
+
+        await Future.delayed(Duration(seconds: 3));
+        emit(SingupUploaded());
+      } on Exception catch (_) {
+        emit(SingupUploadError(message: "Failed to upload, try again later."));
       }
     });
   }
 
   Future<void> _uploadPhotos(Emitter<SignupState> emit) async {
-    if (SignUpDataParser.data.photos != null && SignUpDataParser.data.photos!.isNotEmpty) {
+    if (SignUpDataParser.data.photos != null && SignUpDataParser.data.photos!.isNotEmpty && isSigningUp) {
       emit(SingupPhotoUploading());
 
       try {
@@ -56,22 +94,18 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
           mediaType: MessageType.image,
         );
 
-        print(firstImageDataRes);
-
         if (firstImageDataRes['status'] != 'failed') {
           final futures =
               SignUpDataParser.data.photos!.asMap().entries.where((entry) => entry.key != 0).map((entry) async {
                 final photo = entry.value;
                 final result = await CommonHttpServices().uploadMediaUser(file: File(photo.path), mediaType: MessageType.image);
-                return result['metadata']['signed_url'] as String;
+                return result['metadata'] as Map;
               }).toList();
 
-          List<String> uploadedUrls = await Future.wait(futures);
-          uploadedUrls.insert(0, firstImageDataRes["original_image_url"]);
+          List<Map> uploadedUrls = await Future.wait(futures);
+          uploadedUrls.insert(0, firstImageDataRes["original_image_metadata"]);
           SignUpDataParser.updateField(photos: uploadedUrls);
-          SignUpDataParser.updateField(profilePicture: firstImageDataRes['profile_picture_url']);
-
-          print('Photos uploaded');
+          SignUpDataParser.updateField(profilePicture: firstImageDataRes['profile_metadata']);
 
           emit(SingupPhotoUploaded());
 
@@ -86,7 +120,8 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
           emit(SingupPhotoUploadError(message: 'Face not detected or multiple faces detected in the first image.'));
           emit(SignupInitial(buttonText: "Retry Upload", currentIndex: _currentIndex, progessBarIndex: _progressBarIndex));
         }
-      } catch (e) {
+      } catch (e, stackTree) {
+        log('Photo upload error: $e\n$stackTree');
         emit(SingupPhotoUploadError(message: 'Some error occured, try again.'));
         emit(SignupInitial(buttonText: "Retry Upload", currentIndex: _currentIndex, progessBarIndex: _progressBarIndex));
       }

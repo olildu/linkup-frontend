@@ -4,7 +4,7 @@ class UserModel {
   final String? username;
   final String? gender;
   final int universityId;
-  final String? profilePicture;
+  final Map? profilePicture;
 
   final DateTime? dob;
   final String? interestedGender;
@@ -12,7 +12,7 @@ class UserModel {
   final String? universityMajor;
   final int? universityYear;
 
-  final List<String>? photos;
+  final List<Map>? photos;
   final String? about;
 
   final String? currentlyStaying;
@@ -61,7 +61,7 @@ class UserModel {
       interestedGender: json['interested_gender'],
       universityMajor: json['university_major'],
       universityYear: json['university_year'],
-      photos: json['photos'] != null ? List<String>.from(json['photos']) : [],
+      photos: json['photos'] != null ? List<Map>.from(json['photos']) : [],
       about: json['about'],
       currentlyStaying: json['currently_staying'],
       hometown: json['hometown'],

@@ -97,7 +97,7 @@ class OtherProfileLoadedView extends StatelessWidget {
                                 currentChatUserId: candidate.id,
                                 currentUserId: currentUserId,
                                 userName: candidate.username,
-                                userImage: candidate.profilePicture,
+                                userImageMetaData: candidate.profilePictureMetaData,
                                 chatRoomId: response["chat_room_id"],
                               ),
                             ),

@@ -9,15 +9,15 @@ import 'package:gap/gap.dart';
 import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
 import 'package:linkup/data/enums/message_type_enum.dart';
-import 'package:linkup/data/models/chat_models/message_model.dart';
 import 'package:linkup/data/models/chats_connection_model.dart';
 import 'package:linkup/data/models/matches_connection_model.dart';
 import 'package:linkup/logic/bloc/chats/chats_bloc.dart';
 import 'package:linkup/logic/bloc/connections/connections_bloc.dart';
-import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/screens/chat_page.dart';
 import 'package:linkup/presentation/screens/user_profile_bottom_sheet.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 
 class ConnectionsPage extends StatefulWidget {
   const ConnectionsPage({super.key});
@@ -117,13 +117,13 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
         log('Tapped on ${candidate.username}\'s avatar');
         showBottomSheetUserProfile(context: context, userId: candidate.id);
       },
-      child: Container(
-        width: diameter.w,
-        height: diameter.h,
-        margin: EdgeInsets.only(right: 10.w),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          image: DecorationImage(image: CachedNetworkImageProvider(candidate.profilePicture), fit: BoxFit.cover),
+      child: ClipOval(
+        child: OctoImage(
+          image: CachedNetworkImageProvider(candidate.profilePictureMetaData['url']),
+          placeholderBuilder: blurHash(candidate.profilePictureMetaData['blurhash']).placeholderBuilder,
+          fit: BoxFit.cover,
+          width: diameter.w,
+          height: diameter.h,
         ),
       ),
     );
@@ -151,7 +151,7 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                       currentChatUserId: candidate.id,
                       currentUserId: GetIt.instance<int>(instanceName: 'user_id'),
                       userName: candidate.username,
-                      userImage: candidate.profilePicture,
+                      userImageMetaData: candidate.profilePictureMetaData,
                       chatRoomId: candidate.chatRoomId,
                     ),
                   ),
@@ -159,7 +159,16 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
           );
         },
         contentPadding: EdgeInsets.zero,
-        leading: CircleAvatar(radius: 25.r, backgroundImage: CachedNetworkImageProvider(candidate.profilePicture)),
+        leading: ClipOval(
+          child: OctoImage(
+            image: CachedNetworkImageProvider(candidate.profilePictureMetaData['url']),
+            placeholderBuilder: blurHash(candidate.profilePictureMetaData['blurhash']).placeholderBuilder,
+            fit: BoxFit.cover,
+            width: 50.r,
+            height: 50.r,
+          ),
+        ),
+
         title: Text(
           candidate.username,
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),

@@ -7,7 +7,7 @@ class UpdateMetadataModel {
   final DateTime? dob;
   final String? gender;
 
-  final String? profilePicture;
+  final Map? profilePicture;
   final List<dynamic>? photos;
 
   final String? about;
@@ -53,10 +53,10 @@ class UpdateMetadataModel {
       universityMajor: json['university_major'] as String?,
       universityYear: json['university_year'] as int?,
       username: json['username'] as String?,
-      dob: json['dob'] as DateTime?,
+      dob: json['dob'] != null ? DateTime.parse(json['dob']) : null,
       gender: json['gender'] as String?,
       interestedGender: json['interested_gender'] as String?,
-      profilePicture: json['profile_picture'] as String?,
+      profilePicture: json['profile_picture'] as Map?,
       photos: json['photos'] as List<dynamic>?,
       about: json['about'] as String?,
       currentlyStaying: json['currently_staying'] as String?,
@@ -75,7 +75,7 @@ class UpdateMetadataModel {
       'university_major': universityMajor,
       'university_year': universityYear,
       'username': username,
-      'dob': dob,
+      "dob": dob?.toIso8601String(),
       'gender': gender,
       'interested_gender': interestedGender,
       'photos': photos,

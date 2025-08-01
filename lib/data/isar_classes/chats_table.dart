@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:isar/isar.dart';
 import 'package:linkup/data/models/chats_connection_model.dart';
 
@@ -9,7 +10,7 @@ class ChatsTable {
 
   late int chatID;
   late String username;
-  late String profilePicture;
+  late String profilePictureMetaDataJson; 
   late int chatRoomId;
   late int unseenCounter;
   late String? message;
@@ -19,7 +20,7 @@ class ChatsTable {
   ChatsTable.fromChat(ChatsConnectionModel chatsConnectionModel) {
     chatID = chatsConnectionModel.id;
     username = chatsConnectionModel.username;
-    profilePicture = chatsConnectionModel.profilePicture;
+    profilePictureMetaDataJson = jsonEncode(chatsConnectionModel.profilePictureMetaData);
     chatRoomId = chatsConnectionModel.chatRoomId;
     unseenCounter = chatsConnectionModel.unseenCounter;
     message = chatsConnectionModel.message;
@@ -29,7 +30,7 @@ class ChatsTable {
     return ChatsConnectionModel(
       id: chatID,
       username: username,
-      profilePicture: profilePicture,
+      profilePictureMetaData: jsonDecode(profilePictureMetaDataJson),
       chatRoomId: chatRoomId,
       unseenCounter: unseenCounter,
       message: message,

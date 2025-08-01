@@ -9,6 +9,7 @@ import 'package:linkup/data/models/candidate_info_model.dart';
 import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/data/models/user_model.dart';
 import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
+import 'package:linkup/logic/bloc/signup/signup_bloc.dart';
 import 'package:linkup/presentation/components/common/image_picker_builder.dart';
 import 'package:linkup/presentation/components/common/text_field_builder.dart';
 import 'package:linkup/presentation/components/common/title_sub_builder.dart';
@@ -82,6 +83,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                       ImagePickerBuilder(
                         maxImages: 6,
                         onImagesChanged: (e) {
+                          // CommonHttpServices().uploadMediaUser(file: e, mediaType: mediaType)
+                          context.read<ProfileBloc>().add(ProfileUpdateEvent(userUpdatedModel: UpdateMetadataModel(photos: user.photos! + [])));
                           log(e.first.name);
                         },
                         initialImages: user.photos!,
@@ -151,10 +154,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                       ),
                     ],
                   ),
-
-                  //gender
-                  //currentlyStaying
-                  //hometown
                 );
               } else {
                 return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
@@ -169,7 +168,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   Widget _buildOptions(IconData icon, String title, String? data, int index, dynamic optionsData) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => SingupFlowPage(initialIndex: index, initialData: optionsData.toJson())));
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder:
+                (context) => BlocProvider(
+                  create: (context) => SignupBloc(isSigningUp: false),
+                  child: SingupFlowPage(initialIndex: index, initialData: optionsData.toJson()),
+                ),
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 30.h),

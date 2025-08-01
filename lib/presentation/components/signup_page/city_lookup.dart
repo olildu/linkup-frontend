@@ -67,29 +67,33 @@ class _CityLookupState extends State<CityLookup> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          TextInput(
-            label: "City",
-            placeHolder: "Search your hometown",
-            controller: _controller,
-            onChanged: _onSearchChanged,
-          ),
-          Gap(30.h),
-          SizedBox(
-            height: 300.h,
-            child: OptionBuilder(
-              options: _searchResults,
-              textSize: 13,
-              onChanged: (val) {
-                _controller.text = val;
-                widget.onChanged(val);
-              },
+    return LayoutBuilder(
+      builder: (context, c) {
+        final inputHeight = 80.h;
+        final gapHeight = 30.h;
+
+        final remainingHeight = c.maxHeight - inputHeight - gapHeight;
+
+        return Column(
+          children: [
+            TextInput(label: "City", placeHolder: "Search your hometown", controller: _controller, onChanged: _onSearchChanged),
+            Gap(gapHeight),
+            SizedBox(
+              height: remainingHeight,
+              child: SingleChildScrollView(
+                child: OptionBuilder(
+                  options: _searchResults,
+                  textSize: 13,
+                  onChanged: (val) {
+                    _controller.text = val;
+                    widget.onChanged(val);
+                  },
+                ),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }

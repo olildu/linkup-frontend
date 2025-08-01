@@ -21,14 +21,14 @@ class SignUpPageFlow {
   final Map<String, dynamic>? initialData;
 
   SignUpPageFlow(this.context, {this.initialData}) {
-    _initializeFlow();
+    initialData == null ? _initializeSignUpFlow() : _initializeUpdateFlow();
     SignUpDataParser.initialize(context);
   }
 
   DataValidatorProvider get dataValidatorProvider => Provider.of<DataValidatorProvider>(context, listen: false);
   ThemeCubit get themeCubit => context.read<ThemeCubit>();
 
-  void _initializeFlow() {
+  void _initializeSignUpFlow() {
     flow = [
       {
         'title': PageTitle(
@@ -191,6 +191,113 @@ class SignUpPageFlow {
       {
         'title': PageTitle(inputText: "One last step\nTell us what you love, So we can match you better", highlightWord: ["love", "match"]),
         'action': ImageBuilder(imagePath: "assets/images/like.png", darkMode: themeCubit.isDark),
+        'showProgressBar': false,
+      },
+      {
+        'title': PageTitle(inputText: "How tall are you? Some people are into stats!", highlightWord: "tall"),
+        'action': BuildPicker(
+          controller: FixedExtentScrollController(initialItem: 0),
+          items: List.generate(100, (index) => "${110 + index + 1} cm"),
+          onSelectedItemChanged: (index) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              dataValidatorProvider.allowDisallow(true);
+              SignUpDataParser.updateField(height: 110 + index + 1);
+            });
+          },
+          selectedIndex: initialData?["height"] != null ? (initialData!["height"] - 111) : null,
+          dividerGap: 0.15,
+        ),
+        'showProgressBar': false,
+      },
+      {
+        'title': PageTitle(inputText: "What's your weight? Totally up to you if you want to share.", highlightWord: "weight"),
+        'action': BuildPicker(
+          controller: FixedExtentScrollController(initialItem: 0),
+          items: List.generate(90, (index) => "${30 + index + 1} kg"),
+          onSelectedItemChanged: (index) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              dataValidatorProvider.allowDisallow(true);
+              SignUpDataParser.updateField(weight: 30 + index + 1);
+            });
+          },
+          dividerGap: 0.15,
+          selectedIndex: initialData?["weight"] != null ? (initialData!["weight"] - 31) : null,
+        ),
+        'showProgressBar': false,
+      },
+      {
+        'title': PageTitle(inputText: "What's your religion? Only if you feel like sharing!", highlightWord: "religion"),
+        'action': OptionBuilder(
+          options: ["Islam", "Sikhism", "Jainism", "Christianity", "Hinduism", "Buddhism", "Others"],
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(religion: val);
+          },
+          currentOption: initialData?['religion'],
+        ),
+        'showProgressBar': false,
+      },
+      {
+        'title': PageTitle(inputText: "Do you smoke? Just helping people vibe better", highlightWord: "smoke"),
+        'action': OptionBuilder(
+          options: ["Yes", "Trying to quit", "Occasionally", "No"],
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(smokingInfo: val);
+          },
+          currentOption: initialData?["smoking_info"],
+        ),
+        'showProgressBar': false,
+      },
+      {
+        'title': PageTitle(inputText: "Do you enjoy a drink now and then or not your thing?", highlightWord: "drink"),
+        'action': OptionBuilder(
+          options: ["Yes", "Trying to quit", "Occasionally", "No"],
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(drinkingInfo: val);
+          },
+          currentOption: initialData?["drinking_info"],
+        ),
+        'showProgressBar': false,
+      },
+      {
+        'title': PageTitle(inputText: "What kind of connection are you looking for?", highlightWord: "connection"),
+        'action': OptionBuilder(
+          options: ["Casual", "Open to anything", "Serious", "Friends", "Not sure yet"],
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(lookingFor: val);
+          },
+          currentOption: initialData?["looking_for"],
+        ),
+        'showProgressBar': false,
+      },
+    ];
+  }
+
+  void _initializeUpdateFlow() {
+    flow = [
+      {
+        'title': PageTitle(inputText: "Where are you currently staying?", highlightWord: "currently"),
+        'action': OptionBuilder(
+          options: ["Campus Hostel", "PG", "Home", "Flat", "Other"],
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(currentlyStaying: val);
+          },
+          currentOption: initialData?["currently_staying"],
+        ),
+        'showProgressBar': false,
+      },
+      {
+        'title': PageTitle(inputText: "Where is your hometown? Let us know where you’re from!", highlightWord: "hometown"),
+        'action': CityLookup(
+          onChanged: (val) {
+            dataValidatorProvider.allowDisallow(true);
+            SignUpDataParser.updateField(hometown: val);
+          },
+        ),
         'showProgressBar': false,
       },
       {

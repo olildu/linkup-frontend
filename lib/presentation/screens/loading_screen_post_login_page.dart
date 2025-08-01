@@ -1,15 +1,11 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/data/token/token_services.dart';
 import 'package:linkup/logic/bloc/post_login/post_login_bloc.dart';
 import 'package:linkup/logic/bloc/signup/signup_bloc.dart';
 import 'package:linkup/presentation/screens/landing_page.dart';
 import 'package:linkup/presentation/screens/match_making_page.dart';
 import 'package:linkup/presentation/screens/singup_flow_page.dart';
-
 import 'package:linkup/presentation/utils/logo_design.dart';
 import 'package:linkup/presentation/utils/navigate_fade_transistion.dart';
 
@@ -24,58 +20,54 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
   late AnimationController _controller;
   late Animation<double> _animation;
 
-  bool animationCompleted = false;
-  bool loadingComplete = false;
-  bool tokenCheckDone = false;
-  bool loggedIn = false;
+  final String _logTag = 'LoadingScreen';
+
+  bool _animationCompleted = false;
+  bool _userLoggedIn = false;
+
+  late PostLoginBloc _postLoginBloc;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2));
-
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-
     _controller.forward();
 
-    TokenServices().tokenExists().then((exists) async {
-      loggedIn = exists;
-      tokenCheckDone = true;
-      if (loggedIn) {
-        await TokenServices().registerUserIdIfExists();
-        context.read<PostLoginBloc>().add(StartPostLoginEvent());
-      }
-      _tryNavigate();
-    });
+    _postLoginBloc = context.read<PostLoginBloc>();
+
+    _tokenCheck();
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        animationCompleted = true;
-        _tryNavigate();
+        _animationCompleted = true;
+        _navigateLogic();
       }
     });
   }
 
-  void _tryNavigate() {
-    if (!tokenCheckDone) return;
-    final postLoginState = context.read<PostLoginBloc>().state;
+  void _tokenCheck() {
+    TokenServices().tokenExists().then((exists) {
+      _userLoggedIn = exists;
+      if (exists) {
+        _postLoginBloc.add(StartPostLoginEvent());
+      }
+    });
+  }
 
-    if (loggedIn && postLoginState is PostLoginLoaded) {
-      final goToSignUpPage = postLoginState.goToSignUpPage;
+  void _navigateLogic() {
+    final state = _postLoginBloc.state;
+    if (!_animationCompleted && state is! PostLoginLoaded) return;
 
-      if (goToSignUpPage) {
-        if (animationCompleted && loadingComplete) {
-          navigateWithFade(context, BlocProvider(create: (context) => SignupBloc(), child: const SingupFlowPage(initialIndex: -1)));
-        }
+    if (_userLoggedIn && state is PostLoginLoaded) {
+      if (state.goToSignUpPage) {
+        navigateWithFade(context, BlocProvider(create: (context) => SignupBloc(), child: SingupFlowPage(initialIndex: -1)));
       } else {
-        if (animationCompleted && loadingComplete) {
-          navigateWithFade(context, const MatchMakingPage());
-        }
+        navigateWithFade(context, MatchMakingPage());
       }
     } else {
-      if (animationCompleted) {
-        navigateWithFade(context, const LandingPage());
-      }
+      navigateWithFade(context, LandingPage());
     }
   }
 
@@ -88,10 +80,7 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
       backgroundColor: isDarkMode ? Colors.white : Colors.black,
       body: BlocListener<PostLoginBloc, PostLoginState>(
         listener: (context, state) {
-          if (state is PostLoginError || state is PostLoginLoaded) {
-            loadingComplete = true;
-            _tryNavigate();
-          }
+          if (state is PostLoginError || state is PostLoginLoaded) {}
         },
         child: Center(
           child: SizedBox(

@@ -32,29 +32,30 @@ class PostLoginBloc extends Bloc<PostLoginEvent, PostLoginState> {
       emit(PostLoginLoading());
 
       try {
-        matchesBloc.add(LoadMatchesEvent());
-        webSocketBloc.add(LoadWebSockEvent());
-        chatSocketsBloc.add(LoadChatSocketsEvent());
         profileBloc.add(ProfileLoadEvent());
-        connectionsBloc.add(LoadConnectionsEvent(showLoading: true));
-        connectionsSocketBloc.add(LoadConnectionSocketsEvent());
-
         await profileBloc.stream.firstWhere((state) => state is ProfileLoaded || state is ProfileError);
-        
+
         // We are checking if the user has completed full sign-up
         // This will return true if the user has not completed sign-up as there is no university_id = -1
         final bool goToSignUpPage = (profileBloc.state as ProfileLoaded).user.universityId == -1;
         if (goToSignUpPage) {
+          log("User has not completed sign-up. Redirecting to sign-up page.");
           emit(PostLoginLoaded(goToSignUpPage: goToSignUpPage));
         } else {
+          matchesBloc.add(LoadMatchesEvent());
+          webSocketBloc.add(LoadWebSockEvent());
+          chatSocketsBloc.add(LoadChatSocketsEvent());
+          connectionsBloc.add(LoadConnectionsEvent(showLoading: true));
+          connectionsSocketBloc.add(LoadConnectionSocketsEvent());
+
           await Future.wait([
             matchesBloc.stream.firstWhere((state) => state is MatchesLoaded || state is MatchesError || state is MatchesEmpty),
             webSocketBloc.stream.firstWhere((state) => state is WebSocketConnected || state is WebSocketError),
             chatSocketsBloc.stream.firstWhere((state) => state is ChatSocketsConnected || state is ChatSocketsError),
             connectionsSocketBloc.stream.firstWhere((state) => state is ConnectionsSocketsConnected || state is ConnectionsSocketsError),
           ]);
-
-          emit(PostLoginLoaded());
+          log("All post-login streams loaded successfully.");
+          emit(PostLoginLoaded(goToSignUpPage: goToSignUpPage));
         }
       } catch (e) {
         log("Error during post-login initialization: $e");

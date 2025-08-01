@@ -10,14 +10,7 @@ class OptionBuilder extends StatefulWidget {
   final String? currentOption;
   final double textSize;
 
-  const OptionBuilder({
-    super.key,
-    required this.options,
-    required this.onChanged,
-    this.currentIndex = -1,
-    this.currentOption,
-    this.textSize = 16,
-  });
+  const OptionBuilder({super.key, required this.options, required this.onChanged, this.currentIndex = -1, this.currentOption, this.textSize = 16});
 
   @override
   State<OptionBuilder> createState() => _OptionBuilderState();
@@ -43,30 +36,32 @@ class _OptionBuilderState extends State<OptionBuilder> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: List.generate(widget.options.length, (index) {
-          return GestureDetector(
-            onTap: () {
-              widget.onChanged(widget.options[index]);
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 15.h),
-              decoration: BoxDecoration(
-                color: _currentIndex == index ? AppColors.primary : AppColors.notSelected,
-                borderRadius: BorderRadius.circular(50),
+    return Column(
+      children: [
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: List.generate(widget.options.length, (index) {
+            return GestureDetector(
+              onTap: () {
+                widget.onChanged(widget.options[index]);
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 15.h),
+                decoration: BoxDecoration(
+                  color: _currentIndex == index ? AppColors.primary : AppColors.notSelected,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Text(widget.options[index], style: GoogleFonts.poppins(fontSize: widget.textSize, color: AppColors.whiteTextColor)),
               ),
-              child: Text(widget.options[index], style: GoogleFonts.poppins(fontSize: widget.textSize, color: AppColors.whiteTextColor)),
-            ),
-          );
-        }),
-      ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }

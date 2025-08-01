@@ -6,7 +6,6 @@ import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/presentation/components/signup_page/page_title_builder_component.dart';
 import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/presentation/screens/login_signup_modal_page.dart';
-import 'package:linkup/presentation/screens/singup_flow_page.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});

@@ -10,8 +10,8 @@ final class SignupInit extends SignupEvent {
   SignupInit({required this.signUpPageFlow, required this.currentIndex});
 }
 
-final class SignupNext extends SignupEvent {
-  final bool isAtEnd;
+final class SignupNext extends SignupEvent {}
 
-  SignupNext({required this.isAtEnd});
-}
+final class SignupUpload extends SignupEvent {}
+
+final class SignupOptionalFilled extends SignupEvent {}

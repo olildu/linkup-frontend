@@ -58,7 +58,7 @@ Future<void> main() async {
                   profileBloc: context.read<ProfileBloc>(),
                   connectionsBloc: context.read<ConnectionsBloc>(),
                   connectionsSocketBloc: context.read<ConnectionsSocketBloc>(),
-                ), 
+                ),
           ),
         ],
         child: const MyApp(),

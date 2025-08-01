@@ -6,12 +6,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkup/presentation/constants/colors.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 
 class ImagePickerBuilder extends StatefulWidget {
   final int maxImages;
   final Function(List<XFile>) onImagesChanged;
   final bool allowMultipleSelection;
-  final List<String> initialImages;
+  final List<Map> initialImages;
 
   const ImagePickerBuilder({
     super.key,
@@ -87,12 +89,14 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
     Widget imageDisplayWidget;
     if (hasImage) {
       final item = _displayedItems[index];
-      if (item is String) {
-        imageDisplayWidget = CachedNetworkImage(
-          imageUrl: item,
+      if (item is Map) {
+        imageDisplayWidget = OctoImage(
+          image: CachedNetworkImageProvider(item["url"]),
+          placeholderBuilder: blurHash(item["blurhash"]).placeholderBuilder,
+          errorBuilder: OctoError.icon(color: Colors.red),
           fit: BoxFit.cover,
-          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-          errorWidget: (context, url, error) => const Icon(Icons.error_outline, color: Colors.red),
+          width: 30.r,
+          height: 30.r,
         );
       } else if (item is XFile) {
         imageDisplayWidget = Image.file(File(item.path), fit: BoxFit.cover);
@@ -131,18 +135,20 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
                     fit: StackFit.expand,
                     children: [
                       ClipRRect(borderRadius: BorderRadius.circular(15.r), child: imageDisplayWidget),
-                      Positioned(
-                        top: 5.r,
-                        right: 5.r,
-                        child: GestureDetector(
-                          onTap: () => _removeImage(index),
-                          child: Container(
-                            padding: EdgeInsets.all(4.sp),
-                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                            child: Icon(Icons.close, color: Colors.white, size: 14.sp),
+
+                      if (_displayedItems.length > 2)
+                        Positioned(
+                          top: 5.r,
+                          right: 5.r,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: EdgeInsets.all(4.sp),
+                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                              child: Icon(Icons.close, color: Colors.white, size: 14.sp),
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   )
                   : imageDisplayWidget,

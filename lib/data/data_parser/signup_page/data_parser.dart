@@ -1,28 +1,30 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:linkup/data/http_services/auth_http_services/auth_http_services.dart';
 import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
+import 'package:linkup/logic/bloc/signup/signup_bloc.dart';
 
 import 'package:provider/provider.dart';
 
 class SignUpDataParser {
   static late UpdateMetadataModel _data;
-
   static late UpdateMetadataModel _latestData;
+
+  static late SignupBloc _signupBloc;
 
   static final String debugTag = "SignUpDataParser";
 
   static void initialize(BuildContext context) {
     final state = context.read<ProfileBloc>().state;
+    _signupBloc = context.read<SignupBloc>();
 
     if (state is ProfileLoaded) {
       _data = UpdateMetadataModel.fromJson(state.user.toJson());
       _latestData = UpdateMetadataModel.fromJson(state.user.toJson());
       log("SignUpDataParser initialized", name: debugTag);
     } else {
-      throw Exception("ProfileBloc is not loaded");
+      throw Exception("ProfileBloc or SignupBloc is not loaded");
     }
   }
 
@@ -34,7 +36,7 @@ class SignUpDataParser {
     String? interestedGender,
     DateTime? dob,
     List<dynamic>? photos,
-    String? profilePicture,
+    Map? profilePicture,
     String? about,
     String? currentlyStaying,
     String? hometown,
@@ -66,14 +68,16 @@ class SignUpDataParser {
       drinkingInfo: drinkingInfo ?? _data.drinkingInfo,
       lookingFor: lookingFor ?? _data.lookingFor,
     );
+
+    _signupBloc.add(SignupOptionalFilled());
   }
 
-  static void printFormattedData() {
-    final json = _data.toJson();
-    log(jsonEncode(json.toString()), name: debugTag);
+  static Future<void> submitRegistration() async {
+    log(_data.toJson().toString());
+    await AuthHttpServices.completeProfile(data: _data);
   }
 
-  static void updateData(BuildContext context) {
+  static void updateData(BuildContext context, {bool fromProfilePage = false}) {
     final current = _data.toJson();
     final original = _latestData.toJson();
 

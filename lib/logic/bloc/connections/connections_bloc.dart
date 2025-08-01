@@ -13,7 +13,6 @@ import 'package:linkup/data/models/live_chat_data_model.dart';
 import 'package:linkup/data/models/matches_connection_model.dart';
 import 'package:linkup/data/websocket_services/chat_socket_services/chat_socket_service.dart';
 import 'package:linkup/data/websocket_services/connections_socket_services/connections_socket_services.dart';
-import 'package:linkup/data/websocket_services/lobby_socket_services/lobby_socket_service.dart';
 import 'package:meta/meta.dart';
 
 part 'connections_event.dart';

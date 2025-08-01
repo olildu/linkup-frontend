@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkup/data/get_it/get_it_registerer.dart';
+import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
 
 class AuthHttpServices {
@@ -107,7 +108,7 @@ class AuthHttpServices {
   /// Sends a POST request to the server with the `email_hash` (token) and `password`.
   /// Returns a `Map<String, dynamic>` containing the response body on success,
   /// or throws an exception if the request fails.
-  static Future<bool> completeSignup({required String emailHash, required String password}) async {
+  static Future<bool> completeSignupCreds({required String emailHash, required String password}) async {
     try {
       final response = await http.post(
         Uri.parse("$BASE_URL/signup"),
@@ -144,6 +145,48 @@ class AuthHttpServices {
     } catch (e, stackTrace) {
       log('Unexpected error during completeSignup: $e', name: _logTag, stackTrace: stackTrace);
       throw Exception('Unexpected error during signup');
+    }
+  }
+
+  /// Completes the profile registration for a signed-in user.
+  ///
+  /// Sends a POST request to the `/register` endpoint with user profile data,
+  /// using the provided bearer `accessToken` for authorization.
+  ///
+  /// Parameters:
+  /// - [data]: A `UpdateMetadataModel` containing the complete profile information to send.
+  ///
+  /// Returns:
+  /// - `true` if the profile was successfully completed (i.e., server returns a `msg` field),
+  /// - otherwise throws an `Exception` with error details.
+  ///
+  /// Throws:
+  /// - `Exception` on non-200 response or unexpected errors.
+  static Future<bool> completeProfile({required UpdateMetadataModel data}) async {
+    try {
+      final accessToken = await _secureStorage.read(key: 'access_token');
+      final response = await http.post(
+        Uri.parse('$BASE_URL/register'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken'},
+        body: jsonEncode(data.toJson()),
+      );
+
+      log('Register response status: ${response.statusCode}', name: _logTag);
+      log('Register response body: ${response.body}', name: _logTag);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseBody = jsonDecode(response.body);
+        return responseBody['msg'] != null;
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception("Profile completion failed: ${error['detail'] ?? 'Unknown error'}");
+      }
+    } on http.ClientException catch (e) {
+      log('HTTP ClientException during completeProfile: $e', name: _logTag);
+      throw Exception('Network error during profile completion');
+    } catch (e, stackTrace) {
+      log('Unexpected error during completeProfile: $e', name: _logTag, stackTrace: stackTrace);
+      throw Exception('Unexpected error during profile completion');
     }
   }
 }

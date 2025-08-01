@@ -3,7 +3,7 @@ import 'package:linkup/data/enums/message_type_enum.dart';
 class ChatsConnectionModel {
   final int id;
   final String username;
-  final String profilePicture;
+  final Map profilePictureMetaData;
   final int chatRoomId;
   final int unseenCounter;
   final String? message;
@@ -12,7 +12,7 @@ class ChatsConnectionModel {
   ChatsConnectionModel({
     required this.id,
     required this.username,
-    required this.profilePicture,
+    required this.profilePictureMetaData,
     required this.chatRoomId,
     required this.unseenCounter,
     this.message,
@@ -23,7 +23,7 @@ class ChatsConnectionModel {
     return ChatsConnectionModel(
       id: json['id'],
       username: json['username'],
-      profilePicture: json['profile_picture'],
+      profilePictureMetaData: json['profile_picture'],
       chatRoomId: json['chat_room_id'],
       unseenCounter: json['unseen_counter'],
       message: json['last_message'],
@@ -34,7 +34,7 @@ class ChatsConnectionModel {
   ChatsConnectionModel copyWith({
     int? id,
     String? username,
-    String? profilePicture,
+    Map? profilePictureMetaData,
     int? chatRoomId,
     int? unseenCounter,
     String? message,
@@ -43,7 +43,7 @@ class ChatsConnectionModel {
     return ChatsConnectionModel(
       id: id ?? this.id,
       username: username ?? this.username,
-      profilePicture: profilePicture ?? this.profilePicture,
+      profilePictureMetaData: profilePictureMetaData ?? this.profilePictureMetaData,
       chatRoomId: chatRoomId ?? this.chatRoomId,
       unseenCounter: unseenCounter ?? this.unseenCounter,
       message: message ?? this.message,
