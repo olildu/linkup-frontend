@@ -151,7 +151,7 @@ class SignUpPageFlow {
           child: Column(
             children: [
               ImagePickerBuilder(
-                onImagesChanged: (p0) {
+                onImagesChanged: (p0, _) {
                   if (p0.isNotEmpty && p0.length >= 2) {
                     dataValidatorProvider.allowDisallow(true);
                     SignUpDataParser.updateField(photos: p0);

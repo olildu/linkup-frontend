@@ -3,12 +3,15 @@ import 'dart:developer';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
+import 'package:linkup/data/clients/custom_http_client.dart';
 import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
 
 class AuthHttpServices {
   static final FlutterSecureStorage _secureStorage = GetIt.instance<FlutterSecureStorage>();
+  static final CustomHttpClient _client = GetIt.instance<CustomHttpClient>();
+
   static const String _logTag = 'AuthHttpServices';
 
   /// Attempts login with given email and password.
@@ -57,7 +60,7 @@ class AuthHttpServices {
   /// actual implementation within the selection.
   static Future<int> sendEmailOTP({required String email}) async {
     try {
-      final response = await http.get(Uri.parse("$BASE_URL/verify-email?email=$email"), headers: {'Content-Type': 'application/json'});
+      final response = await _client.get(Uri.parse("$BASE_URL/verify-email?email=$email"), headers: {'Content-Type': 'application/json'});
 
       log('OTP response status: ${response.statusCode}', name: _logTag);
       log('OTP response body: ${response.body}', name: _logTag);
@@ -79,7 +82,7 @@ class AuthHttpServices {
   /// or throws an exception if the request fails.
   static Future<Map<String, dynamic>> verifyEmailOTP({required String email, required int otp}) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse("$BASE_URL/verify-otp"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({"email": email, "otp": otp}),
@@ -110,7 +113,7 @@ class AuthHttpServices {
   /// or throws an exception if the request fails.
   static Future<bool> completeSignupCreds({required String emailHash, required String password}) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse("$BASE_URL/signup"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({"email_hash": emailHash, "password": password}),
@@ -165,7 +168,7 @@ class AuthHttpServices {
   static Future<bool> completeProfile({required UpdateMetadataModel data}) async {
     try {
       final accessToken = await _secureStorage.read(key: 'access_token');
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$BASE_URL/register'),
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken'},
         body: jsonEncode(data.toJson()),

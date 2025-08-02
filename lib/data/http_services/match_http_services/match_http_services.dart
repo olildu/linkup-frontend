@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
-import 'package:http/http.dart' as http;
+import 'package:linkup/data/clients/custom_http_client.dart';
 import 'package:linkup/data/models/chats_connection_model.dart';
 import 'package:linkup/data/models/matches_connection_model.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
@@ -11,11 +11,12 @@ import 'package:linkup/data/models/match_candidate_model.dart';
 
 class MatchHttpServices {
   final FlutterSecureStorage _secureStorage = GetIt.instance<FlutterSecureStorage>();
+  static final CustomHttpClient _client = GetIt.instance<CustomHttpClient>();
 
   Future<List<MatchCandidateModel>> getMatchUsers() async {
     final accessToken = await _secureStorage.read(key: 'access_token');
 
-    final response = await http.get(Uri.parse("$BASE_URL/matches/get-matches"), headers: {'Authorization': 'Bearer $accessToken'});
+    final response = await _client.get(Uri.parse("$BASE_URL/matches/get-matches"), headers: {'Authorization': 'Bearer $accessToken'});
 
     if (response.statusCode == 200) {
       final Map jsonData = json.decode(response.body);
@@ -31,7 +32,7 @@ class MatchHttpServices {
   Future<Map<String, dynamic>> getConnections() async {
     final accessToken = await _secureStorage.read(key: 'access_token');
 
-    final response = await http.get(Uri.parse("$BASE_URL/matches/get-connections"), headers: {'Authorization': 'Bearer $accessToken'});
+    final response = await _client.get(Uri.parse("$BASE_URL/matches/get-connections"), headers: {'Authorization': 'Bearer $accessToken'});
 
     if (response.statusCode == 200) {
       final Map jsonData = json.decode(response.body);

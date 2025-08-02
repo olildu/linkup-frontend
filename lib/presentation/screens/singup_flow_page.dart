@@ -75,7 +75,7 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
       Navigator.of(context).pop();
     } else if (state is SingupPhotoUploadError) {
       // Show error message and close Overlay
-      showErrorToast(context, state.message);
+      showToast(context: context, message: state.message);
       Navigator.of(context).pop();
     } else if (state is SignupInitial) {
       // Normal Flow
@@ -105,7 +105,7 @@ class _SingupFlowPageState extends State<SingupFlowPage> {
       // Pop in case of completed updation
       Navigator.of(context).pop();
     } else if (state is SingupUploadError) {
-      showErrorToast(context, state.message);
+      showToast(context: context, message: state.message);
       Navigator.of(context).pop();
     }
   }

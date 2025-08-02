@@ -1,33 +1,113 @@
 import 'package:flutter/material.dart';
 
-void showErrorToast(BuildContext context, String message) {
+/// Call this to show the toast
+void showToast({
+  required BuildContext context,
+  required String message,
+  IconData? icon,
+  Color backgroundColor = Colors.redAccent,
+  Color textColor = Colors.white,
+  Duration duration = const Duration(seconds: 3),
+}) {
   final overlay = Overlay.of(context);
-  final overlayEntry = OverlayEntry(
+  late final OverlayEntry overlayEntry;
+
+  overlayEntry = OverlayEntry(
     builder:
-        (context) => Positioned(
-          bottom: 100,
-          left: MediaQuery.of(context).size.width * 0.1,
-          right: MediaQuery.of(context).size.width * 0.1,
-          child: Material(
-            color: Colors.transparent,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
-                ),
-                child: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14), textAlign: TextAlign.center),
-              ),
-            ),
-          ),
+        (context) => ToastWidget(
+          message: message,
+          icon: icon,
+          backgroundColor: backgroundColor,
+          textColor: textColor,
+          duration: duration,
+          onDismissed: () => overlayEntry.remove(),
         ),
   );
 
   overlay.insert(overlayEntry);
+}
 
-  Future.delayed(const Duration(seconds: 3), () {
-    overlayEntry.remove();
+/// Internal widget with fade-in/out animation
+class ToastWidget extends StatefulWidget {
+  final String message;
+  final IconData? icon;
+  final Color backgroundColor;
+  final Color textColor;
+  final Duration duration;
+  final VoidCallback onDismissed;
+
+  const ToastWidget({
+    super.key,
+    required this.message,
+    this.icon,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.duration,
+    required this.onDismissed,
   });
+
+  @override
+  State<ToastWidget> createState() => _ToastWidgetState();
+}
+
+class _ToastWidgetState extends State<ToastWidget> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _controller.forward();
+
+    Future.delayed(widget.duration, () async {
+      if (!mounted) return;
+      await _controller.reverse();
+      widget.onDismissed();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      bottom: 100,
+      left: 0,
+      right: 0,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: IntrinsicWidth(
+              child: Container(
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: widget.backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.icon != null)
+                      Padding(padding: const EdgeInsets.only(right: 8), child: Icon(widget.icon, color: widget.textColor, size: 18)),
+                    Flexible(child: Text(widget.message, style: TextStyle(color: widget.textColor, fontSize: 14), textAlign: TextAlign.center)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

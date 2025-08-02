@@ -7,13 +7,15 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:linkup/presentation/utils/show_error_toast.dart';
 import 'package:octo_image/octo_image.dart';
 
 class ImagePickerBuilder extends StatefulWidget {
   final int maxImages;
-  final Function(List<XFile>) onImagesChanged;
+  final Function(List<dynamic>, bool changePfp) onImagesChanged;
   final bool allowMultipleSelection;
   final List<Map> initialImages;
+  final bool onSignUp;
 
   const ImagePickerBuilder({
     super.key,
@@ -21,6 +23,7 @@ class ImagePickerBuilder extends StatefulWidget {
     required this.onImagesChanged,
     this.allowMultipleSelection = true,
     this.initialImages = const [],
+    this.onSignUp = true,
   });
 
   @override
@@ -42,6 +45,7 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
 
   Future<void> _pickImages() async {
     if (_displayedItems.length >= widget.maxImages) return;
+
     try {
       final List<XFile> pickedImages =
           widget.allowMultipleSelection
@@ -60,7 +64,7 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
             int imagesToAddCount = newImagesToAdd.length > remainingSlots ? remainingSlots : newImagesToAdd.length;
             if (imagesToAddCount > 0) {
               _displayedItems.addAll(newImagesToAdd.sublist(0, imagesToAddCount));
-              widget.onImagesChanged(_displayedItems.whereType<XFile>().toList());
+              widget.onImagesChanged(_displayedItems, false);
             }
           }
         });
@@ -69,7 +73,7 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
       String errorMessage = 'Failed to pick images';
       if (e is Exception) errorMessage = 'Failed to pick images: ${e.toString()}';
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+        showToast(context: context, message: errorMessage);
       }
     }
   }
@@ -78,7 +82,8 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
     setState(() {
       if (index < _displayedItems.length) {
         _displayedItems.removeAt(index);
-        widget.onImagesChanged(_displayedItems.whereType<XFile>().toList());
+        print("From inside : ${_displayedItems.length}");
+        widget.onImagesChanged(_displayedItems, index == 0);
       }
     });
   }

@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
           _hasError = true;
         });
 
-        showErrorToast(context, 'Invalid email or password');
+        showToast(context: context, message: 'Invalid email or password');
 
         break;
       default:

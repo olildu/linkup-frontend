@@ -1,9 +1,11 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
+import 'package:linkup/data/clients/custom_http_client.dart';
 import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/data/isar_classes/chats_table.dart';
 import 'package:linkup/data/isar_classes/message_table.dart';
@@ -16,10 +18,12 @@ import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/chat_sockets/chat_sockets_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/connection_sockets/connections_socket_bloc.dart';
 import 'package:linkup/logic/bloc/web_socket/web_socket_bloc.dart';
+import 'package:linkup/logic/cubit/connectivity_cubit/cubit/connectivity_cubit_cubit.dart';
 import 'package:linkup/logic/cubit/theme/theme_cubit.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/logic/provider/data_validator_provider.dart';
+import 'package:linkup/presentation/utils/show_error_toast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,6 +39,7 @@ Future<void> main() async {
 
   GetItRegisterer.registerValue<Isar>(value: isar);
   GetItRegisterer.registerValue<FlutterSecureStorage>(value: FlutterSecureStorage());
+  GetItRegisterer.registerValue<CustomHttpClient>(value: CustomHttpClient());
 
   runApp(
     MultiProvider(
@@ -48,6 +53,7 @@ Future<void> main() async {
           BlocProvider(create: (_) => ChatSocketsBloc(isar: getIt<Isar>())),
           BlocProvider(create: (_) => ConnectionsSocketBloc()),
           BlocProvider(create: (_) => ThemeCubit()),
+          BlocProvider(create: (_) => ConnectivityCubit(Connectivity())),
 
           BlocProvider(
             create:
@@ -82,7 +88,16 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeMode,
-            home: const LoadingScreenPostLogin(),
+            home: BlocListener<ConnectivityCubit, ConnectivityCubitState>(
+              listener: (context, state) {
+                if (state is ConnectivityDisconnected) {
+                  showToast(context: context, message: 'No internet connection', backgroundColor: Colors.red, icon: Icons.wifi_off);
+                } else if (state is ConnectivityConnected) {
+                  showToast(context: context, message: 'Back online', backgroundColor: Colors.green, icon: Icons.wifi);
+                }
+              },
+              child: const LoadingScreenPostLogin(),
+            ),
           );
         },
       ),
