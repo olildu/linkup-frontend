@@ -22,10 +22,10 @@ class ChatSocketsBloc extends Bloc<ChatSocketsEvent, ChatSocketsState> {
     on<LoadChatSocketsEvent>((event, emit) async {
       emit(ChatSocketsConnecting());
       try {
-        await ChatSocketServices.connect();
+        await ChatSocketServices.instance().connect();
 
         _statusSubscription?.cancel();
-        _statusSubscription = ChatSocketServices.connectionStatusStream.listen((connected) async {
+        _statusSubscription = ChatSocketServices.chatsConnectionStatusStream.listen((connected) async {
           log("WebSocket connected: $connected", name: _logTag);
           if (connected == true) {
             final allMessages = await isar.unsentMessagesTables.where().findAll();
@@ -33,7 +33,7 @@ class ChatSocketsBloc extends Bloc<ChatSocketsEvent, ChatSocketsState> {
             for (UnsentMessagesTable msg in allMessages) {
               try {
                 Message message = msg.toMessage();
-                ChatSocketServices.sendMessage(messageBody: message.toJson());
+                ChatSocketServices.instance().sendMessage(message.toJson());
                 message.copyWith(isSent: true);
 
                 await isar.writeTxn(() async {

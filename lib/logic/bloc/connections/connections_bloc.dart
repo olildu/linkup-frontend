@@ -29,7 +29,7 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
 
   void _socketInit() {
     _chatSocketSubscription?.cancel();
-    _chatSocketSubscription = ChatSocketServices.messageStream.listen((raw) {
+    _chatSocketSubscription = ChatSocketServices.chatsMessageStream.listen((raw) {
       final currentState = state;
       if (currentState is! ConnectionsLoaded) return;
 

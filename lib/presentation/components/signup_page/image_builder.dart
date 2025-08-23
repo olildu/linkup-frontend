@@ -1,63 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 
 class ImageBuilder extends StatelessWidget {
-  final String imagePath;
+  final dynamic imageMetaData;
   final bool? darkMode;
   final double? height;
   final double? width;
   final void Function()? onTap;
 
-  const ImageBuilder({
-    super.key,
-    this.imagePath = "assets/images/care.png",
-    this.darkMode,
-    this.height,
-    this.width,
-    this.onTap,
-  });
+  const ImageBuilder({super.key, this.imageMetaData = "assets/images/care.png", this.darkMode, this.height, this.width, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final bool isNetwork = imagePath.startsWith('http');
+    final bool isNetwork = imageMetaData is Map<String, dynamic>;
 
     Widget imageWidget = GestureDetector(
       onTap: onTap,
+
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20.0.r),
-        child: isNetwork
-            ? CachedNetworkImage(
-                imageUrl: imagePath,
-                fit: BoxFit.cover,
-                width: width ?? double.infinity,
-                height: height ?? double.infinity,
-                placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              )
-            : Image.asset(
-                imagePath,
-                height: height ?? double.infinity,
-                fit: BoxFit.cover,
-                width: width ?? double.infinity,
-              ),
+        child:
+            isNetwork
+                ? OctoImage(
+                  image: CachedNetworkImageProvider(imageMetaData['url']),
+                  placeholderBuilder: blurHash(imageMetaData['blurhash']).placeholderBuilder,
+                  fit: BoxFit.cover,
+                  width: width ?? double.infinity,
+                  height: height ?? double.infinity,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+                )
+                : Image.asset(imageMetaData, height: height ?? double.infinity, fit: BoxFit.cover, width: width ?? double.infinity),
       ),
     );
 
     if (darkMode == true) {
       return ColorFiltered(
-        colorFilter: const ColorFilter.matrix(<double>[
-          -1, 0, 0, 0, 255,
-          0, -1, 0, 0, 255,
-          0, 0, -1, 0, 255,
-          0, 0, 0, 1, 0,
-        ]),
+        colorFilter: const ColorFilter.matrix(<double>[-1, 0, 0, 0, 255, 0, -1, 0, 0, 255, 0, 0, -1, 0, 255, 0, 0, 0, 1, 0]),
         child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(20.0.r),
-          ),  
-          child: imageWidget
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20.0.r)),
+          child: imageWidget,
         ),
       );
     }

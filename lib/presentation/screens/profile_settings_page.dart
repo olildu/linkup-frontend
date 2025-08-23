@@ -62,7 +62,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       }
     }
 
-    context.read<ProfileBloc>().add(ProfileUpdateEvent(userUpdatedModel: UpdateMetadataModel(photos: finalImages, profilePicture: pfpMetadata)));
+    context.read<ProfileBloc>().add(
+      ProfileUpdateEvent(userUpdatedModel: UpdateMetadataModel(photos: finalImages, profilePicture: pfpMetadata?['profile_metadata'])),
+    );
 
     setState(() {
       _updating = false;

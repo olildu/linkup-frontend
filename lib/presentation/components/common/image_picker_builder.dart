@@ -82,7 +82,6 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
     setState(() {
       if (index < _displayedItems.length) {
         _displayedItems.removeAt(index);
-        print("From inside : ${_displayedItems.length}");
         widget.onImagesChanged(_displayedItems, index == 0);
       }
     });
@@ -141,7 +140,7 @@ class _ImagePickerBuilderState extends State<ImagePickerBuilder> {
                     children: [
                       ClipRRect(borderRadius: BorderRadius.circular(15.r), child: imageDisplayWidget),
 
-                      if (_displayedItems.length > 2)
+                      if (_displayedItems.length > 2 || widget.onSignUp)
                         Positioned(
                           top: 5.r,
                           right: 5.r,

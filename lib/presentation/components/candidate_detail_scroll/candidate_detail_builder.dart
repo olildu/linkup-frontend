@@ -21,7 +21,7 @@ class CandidateDetailBuilder extends StatelessWidget {
     final MatchCandidateModel localCandidate = candidate;
     final candidateInformation = CandidateInfoModel.fromMatchCandidate(localCandidate);
 
-    List<String> imageRest = localCandidate.photos.sublist(1);
+    List<Map> imageRest = localCandidate.photos.sublist(1);
 
     void showFullScreenImage(String imagePath) {
       Navigator.push(context, CupertinoPageRoute(builder: (context) => FullScreenImageScreen(imagePath: imagePath)));
@@ -34,12 +34,12 @@ class CandidateDetailBuilder extends StatelessWidget {
           children: [
             LayoutBuilder(
               builder: (context, constraints) {
-                String imagePath = localCandidate.photos[0];
+                Map imagePath = localCandidate.photos[0];
                 return ImageBuilder(
-                  imagePath: imagePath,
+                  imageMetaData: imagePath,
                   height: availableHeight,
                   onTap: () {
-                    showFullScreenImage(imagePath);
+                    showFullScreenImage(imagePath['url']);
                   },
                 );
               },
@@ -65,6 +65,8 @@ class CandidateDetailBuilder extends StatelessWidget {
                       Text(
                         '${localCandidate.username}, ${calculateAge(localCandidate.dob)}',
                         style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
 
                       Gap(4.h),
@@ -75,9 +77,13 @@ class CandidateDetailBuilder extends StatelessWidget {
 
                           Gap(6.w),
 
-                          Text(
-                            '${localCandidate.universityMajor} Student',
-                            style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                          Expanded(
+                            child: Text(
+                              '${localCandidate.universityMajor} Student',
+                              style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                         ],
                       ),
@@ -150,7 +156,11 @@ class CandidateDetailBuilder extends StatelessWidget {
             itemBuilder: (context, index) {
               return Column(
                 children: [
-                  ImageBuilder(imagePath: imageRest[index], height: availableHeight * 0.8, onTap: () => showFullScreenImage(imageRest[index])),
+                  ImageBuilder(
+                    imageMetaData: imageRest[index],
+                    height: availableHeight * 0.8,
+                    onTap: () => showFullScreenImage(imageRest[index]['url']),
+                  ),
                   Gap(5.h),
                 ],
               );

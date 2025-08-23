@@ -36,7 +36,7 @@ class SignUpPageFlow {
           highlightWord: "who",
           subText: "linkup keeps your personal information safe and private",
         ),
-        'action': ImageBuilder(imagePath: "assets/images/care.png", darkMode: themeCubit.isDark),
+        'action': ImageBuilder(imageMetaData: "assets/images/care.png", darkMode: themeCubit.isDark),
         "showProgressBar": false,
       },
       {
@@ -190,7 +190,7 @@ class SignUpPageFlow {
 
       {
         'title': PageTitle(inputText: "One last step\nTell us what you love, So we can match you better", highlightWord: ["love", "match"]),
-        'action': ImageBuilder(imagePath: "assets/images/like.png", darkMode: themeCubit.isDark),
+        'action': ImageBuilder(imageMetaData: "assets/images/like.png", darkMode: themeCubit.isDark),
         'showProgressBar': false,
       },
       {

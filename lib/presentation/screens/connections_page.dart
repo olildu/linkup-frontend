@@ -117,13 +117,15 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
         log('Tapped on ${candidate.username}\'s avatar');
         showBottomSheetUserProfile(context: context, userId: candidate.id);
       },
-      child: ClipOval(
-        child: OctoImage(
-          image: CachedNetworkImageProvider(candidate.profilePictureMetaData['url']),
-          placeholderBuilder: blurHash(candidate.profilePictureMetaData['blurhash']).placeholderBuilder,
-          fit: BoxFit.cover,
-          width: diameter.w,
-          height: diameter.h,
+      child: SizedBox(
+        width: diameter,
+        height: diameter,
+        child: ClipOval(
+          child: OctoImage(
+            image: CachedNetworkImageProvider(candidate.profilePictureMetaData['url']),
+            placeholderBuilder: blurHash(candidate.profilePictureMetaData['blurhash']).placeholderBuilder,
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

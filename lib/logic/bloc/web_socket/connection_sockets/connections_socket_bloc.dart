@@ -14,7 +14,7 @@ class ConnectionsSocketBloc extends Bloc<ConnectionsSocketEvent, ConnectionsSock
     on<LoadConnectionSocketsEvent>((event, emit) async {
       emit(ConnectionsSocketsConnecting());
       try {
-        await ConnectionsSocketService.connect();
+        await ConnectionsSocketService.instance().connect();
         emit(ConnectionsSocketsConnected());
       } catch (e) {
         log("Failed : $e", name: _logTag);

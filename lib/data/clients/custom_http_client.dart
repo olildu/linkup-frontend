@@ -46,7 +46,7 @@ class CustomHttpClient {
     http.Response response = await request(accessToken);
 
     if (response.statusCode == 401) {
-      final refreshed = await _refreshToken();
+      final refreshed = await refreshToken();
       if (refreshed) {
         accessToken = await _storage.read(key: 'access_token');
         if (accessToken == null) throw Exception("Failed to refresh token");
@@ -63,7 +63,7 @@ class CustomHttpClient {
     return {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken', ...?extra};
   }
 
-  Future<bool> _refreshToken() async {
+  Future<bool> refreshToken() async {
     final refreshToken = await _storage.read(key: 'refresh_token');
     if (refreshToken == null) return false;
 

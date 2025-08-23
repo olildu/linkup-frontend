@@ -52,7 +52,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   void _startSocketListeners() {
     // Message Socket Subscription
     _messageSocketSubscription?.cancel();
-    _messageSocketSubscription = ChatSocketServices.messageStream.listen((raw) {
+    _messageSocketSubscription = ChatSocketServices.chatsMessageStream.listen((raw) {
       final data = jsonDecode(raw);
       if (data["type"] == "chats") {
         switch (data["chats_type"]) {
@@ -71,7 +71,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
 
     // Connection Status Subscription
     _statusSubscription?.cancel();
-    _statusSubscription = ChatSocketServices.connectionStatusStream.listen((connectionStatus) {
+    _statusSubscription = ChatSocketServices.chatsConnectionStatusStream.listen((connectionStatus) {
       log("Connection status : $connectionStatus", name: _logTag);
       if (connectionStatus == true) {
         add(StartChatsEvent(showLoading: false));
@@ -125,7 +125,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       });
 
       log("Chat socket initialized", name: _logTag);
-      emit(ChatsLoaded(messages: messages, isSocketConnected: ChatSocketServices.isConnected));
+      emit(ChatsLoaded(messages: messages, isSocketConnected: ChatSocketServices.chatsIsConnected));
     } catch (e, stackTrace) {
       log("StartChatsEvent error", error: e, stackTrace: stackTrace, name: _logTag);
       emit(ChatsError());
@@ -142,7 +142,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
         return;
       }
 
-      final isConnected = ChatSocketServices.isConnected;
+      final isConnected = ChatSocketServices.chatsIsConnected;
 
       final updatedMessage = isConnected ? message : message.copyWith(isSent: false);
       final updatedMessages = List<Message>.from(currentState.messages)..add(updatedMessage);
@@ -150,7 +150,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       emit(currentState.copyWith(messages: updatedMessages, otherUserSeenMsg: false));
 
       if (isConnected) {
-        ChatSocketServices.sendMessage(messageBody: message.toJson());
+        ChatSocketServices.instance().sendMessage(message.toJson());
       } else {
         add(_ClearSocketDisconnectedFlagEvent(message: updatedMessage));
       }
@@ -192,16 +192,14 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       final updatedMessages = List<Message>.from(currentState.messages);
       updatedMessages[index] = updatedMessage;
 
-      ChatSocketServices.sendMessage(
-        messageBody: {
-          "type": "chats",
-          "chats_type": "seen",
-          "to": currentChatUserId,
-          "from_": currentUserId,
-          "chat_room_id": chatRoomId,
-          "message_id": event.messageId,
-        },
-      );
+      ChatSocketServices.instance().sendMessage({
+        "type": "chats",
+        "chats_type": "seen",
+        "to": currentChatUserId,
+        "from_": currentUserId,
+        "chat_room_id": chatRoomId,
+        "message_id": event.messageId,
+      });
 
       log("Message marked as seen: ${event.messageId}", name: _logTag);
       emit(currentState.copyWith(messages: updatedMessages));
@@ -269,9 +267,13 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     try {
       final currentState = state;
       if (currentState is ChatsLoaded && !_typingTimerActive) {
-        ChatSocketServices.sendMessage(
-          messageBody: {"type": "chats", "chats_type": "typing", "to": event.currentChatUserId, "from_": currentUserId, "chat_room_id": chatRoomId},
-        );
+        ChatSocketServices.instance().sendMessage({
+          "type": "chats",
+          "chats_type": "typing",
+          "to": event.currentChatUserId,
+          "from_": currentUserId,
+          "chat_room_id": chatRoomId,
+        });
 
         _typingTimerActive = true;
         _typingTimer?.cancel();
