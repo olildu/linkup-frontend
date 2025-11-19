@@ -90,13 +90,7 @@ class _MatchedPageState extends State<MatchedPage> {
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    Center(
-                      child: _imageBuilder(
-                        imageMetaData: (context.read<ProfileBloc>().state as ProfileLoaded).user.profilePicture!,
-                        offsetX: -_offset,
-                        angle: -_rotationAngle,
-                      ),
-                    ),
+                    Center(child: _imageBuilder(imageMetaData: (context.read<ProfileBloc>().state as ProfileLoaded).user.profilePicture!, offsetX: -_offset, angle: -_rotationAngle)),
                     _imageBuilder(imageMetaData: widget.matchUser.profilePictureMetaData, offsetX: _offset, angle: _rotationAngle),
                   ],
                 ),
@@ -105,9 +99,7 @@ class _MatchedPageState extends State<MatchedPage> {
                   padding: EdgeInsets.symmetric(horizontal: 30.w),
                   child: PageTitle(
                     inputText:
-                        widget.meet8State
-                            ? "Congratulations!\n${widget.matchUser.username} and you have been matched"
-                            : "Congratulations!\n${widget.matchUser.username} and you like each other",
+                        widget.meet8State ? "Congratulations!\n${widget.matchUser.username} and you have been matched" : "Congratulations!\n${widget.matchUser.username} and you like each other",
                     highlightWord: widget.matchUser.username,
                   ),
                 ),
@@ -126,12 +118,9 @@ class _MatchedPageState extends State<MatchedPage> {
                             builder:
                                 (ctx) => BlocProvider(
                                   create:
-                                      (ctx) => ChatsBloc(
-                                        currentChatUserId: widget.matchUser.id,
-                                        currentUserId: currentUserId,
-                                        chatRoomId: response["chat_room_id"],
-                                        isar: GetIt.instance<Isar>(),
-                                      )..add(StartChatsEvent()),
+                                      (ctx) =>
+                                          ChatsBloc(currentChatUserId: widget.matchUser.id, currentUserId: currentUserId, chatRoomId: response["chat_room_id"], isar: GetIt.instance<Isar>())
+                                            ..add(StartChatsEvent()),
                                   child: ChatPage(
                                     currentChatUserId: widget.matchUser.id,
                                     currentUserId: currentUserId,
@@ -160,6 +149,7 @@ class _MatchedPageState extends State<MatchedPage> {
   }
 
   Widget _imageBuilder({required Map imageMetaData, required double offsetX, required double angle}) {
+    print(imageMetaData);
     final String url = imageMetaData["url"];
     final String blurhash = imageMetaData["blurhash"];
 

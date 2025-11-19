@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class ThemeCubit extends Cubit<ThemeMode> {
   static const String _key = "theme_mode";
 
-  ThemeCubit() : super(ThemeMode.light) {
+  ThemeCubit() : super(ThemeMode.dark) {
     _loadTheme();
   }
 

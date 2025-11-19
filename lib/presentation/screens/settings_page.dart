@@ -45,20 +45,19 @@ class _ProfileSettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleSubtitle('Appearance', 'Customize your theme settings'),
-                  Gap(20.h),
+                  // _buildTitleSubtitle('Appearance', 'Customize your theme settings'),
+                  // Gap(20.h),
 
-                  _buildOption(
-                    icon: Icons.dark_mode_rounded,
-                    title: themeMode == ThemeMode.dark ? 'Disable Dark Mode' : 'Enable Dark Mode',
-                    onTap: (bool value) {
-                      context.read<ThemeCubit>().toggleTheme();
-                    },
-                    value: themeMode == ThemeMode.dark,
-                  ),
+                  // _buildOption(
+                  //   icon: Icons.dark_mode_rounded,
+                  //   title: themeMode == ThemeMode.dark ? 'Disable Dark Mode' : 'Enable Dark Mode',
+                  //   onTap: (bool value) {
+                  //     context.read<ThemeCubit>().toggleTheme();
+                  //   },
+                  //   value: themeMode == ThemeMode.dark,
+                  // ),
 
-                  _buildOption(icon: Icons.visibility_off_rounded, title: 'Hide Online Status', onTap: (bool value) {}, value: false),
-
+                  // _buildOption(icon: Icons.visibility_off_rounded, title: 'Hide Online Status', onTap: (bool value) {}, value: false),
                   Spacer(),
 
                   Row(
@@ -69,10 +68,7 @@ class _ProfileSettingsPageState extends State<SettingsPage> {
                           title: "Logout",
                           onTap: () async {
                             await TokenServices().clearTokens();
-                            Navigator.of(context).pushAndRemoveUntil(
-                              CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()),
-                              (Route<dynamic> route) => false,
-                            );
+                            Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()), (Route<dynamic> route) => false);
                           },
                         ),
                       ),
@@ -126,13 +122,7 @@ class _ProfileSettingsPageState extends State<SettingsPage> {
       children: [
         Text(title, style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         Gap(10.h),
-        Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: Theme.of(context).brightness == Brightness.dark ? AppColors.notSelected : const Color.fromARGB(255, 141, 141, 141),
-          ),
-        ),
+        Text(subtitle, style: TextStyle(fontSize: 14.sp, color: Theme.of(context).brightness == Brightness.dark ? AppColors.notSelected : const Color.fromARGB(255, 141, 141, 141))),
       ],
     );
   }

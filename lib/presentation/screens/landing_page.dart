@@ -28,8 +28,8 @@ class _LandingPageState extends State<LandingPage> {
             return ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                height: MediaQuery.of(context).size.height * modalHeight,
+                duration: const Duration(milliseconds: 100),
+                height: (MediaQuery.of(context).size.height * modalHeight) + MediaQuery.of(context).viewInsets.bottom,
                 child: LoginSignupPage(
                   onTabChange: (int tabIndex) {
                     double newHeight;

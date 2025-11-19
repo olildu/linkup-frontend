@@ -1,10 +1,20 @@
 // ignore_for_file: non_constant_identifier_names
 
-final String BASE_URL = 'http://10.0.2.2:8000';
-final String WS_BASE_URL = 'ws://10.0.2.2:8000/ws';
+import 'dart:io';
 
-// final String BASE_URL = 'http://172.20.10.2:8000';
-// final String WS_BASE_URL = 'ws://172.20.10.2:8000/ws';
+final bool prod = true;
 
-// final String BASE_URL = 'https://748e6dcbe572.ngrok-free.app';
-// final String WS_BASE_URL = 'wss://748e6dcbe572.ngrok-free.app/ws';
+String getBASEURL() {
+  if (prod) {
+    return 'linkup-backend.olildu.dpdns.org';
+  }
+  if (Platform.isAndroid) {
+    return '10.0.2.2:8002';
+  } else {
+    return 'localhost:8002';
+  }
+}
+
+// Upgrade to https or wss when on prod
+final String BASE_URL = 'http${prod ? "s" : ""}://${getBASEURL()}';
+final String WS_BASE_URL = 'ws${prod ? "s" : ""}://${getBASEURL()}/ws';

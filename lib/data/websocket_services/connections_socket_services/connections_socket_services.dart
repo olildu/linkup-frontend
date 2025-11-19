@@ -1,13 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:developer';
-
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:linkup/data/websocket_services/base_socket_service.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/status.dart' as status;
-
 import '../../../presentation/constants/global_constants.dart';
 
 class ConnectionsSocketService extends BaseSocketService {

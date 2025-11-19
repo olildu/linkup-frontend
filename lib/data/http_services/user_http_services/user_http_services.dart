@@ -1,9 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
-
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
-import 'package:http/http.dart' as http;
 import 'package:linkup/data/clients/custom_http_client.dart';
 import 'package:linkup/data/models/match_candidate_model.dart';
 import 'package:linkup/data/models/update_metadata_model.dart';

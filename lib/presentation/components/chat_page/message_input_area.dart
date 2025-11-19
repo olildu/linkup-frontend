@@ -35,14 +35,7 @@ class MessageInputArea extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 8.h),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            offset: const Offset(0, -2),
-            blurRadius: 5,
-            spreadRadius: -1,
-            color: const Color.fromARGB(255, 26, 26, 26).withValues(alpha: 0.08),
-          ),
-        ],
+        boxShadow: [BoxShadow(offset: const Offset(0, -2), blurRadius: 5, spreadRadius: -1, color: const Color.fromARGB(255, 26, 26, 26).withValues(alpha: 0.08))],
       ),
       child: SafeArea(
         child: Column(
@@ -51,10 +44,7 @@ class MessageInputArea extends StatelessWidget {
                 ? Container(
                   padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
                   width: maxWidth,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline, width: 2)),
-                  ),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline, width: 2))),
 
                   child: Column(
                     children: [
@@ -69,21 +59,12 @@ class MessageInputArea extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    "Replying to ${replyPayload?.userName}",
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w300),
-                                  ),
+                                  Text("Replying to ${replyPayload?.userName}", overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w300)),
                                   Text(
                                     replyPayload!.message,
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w300,
-                                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
-                                    ),
+                                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w300, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
                                   ),
                                 ],
                               ),
@@ -137,14 +118,8 @@ class MessageInputArea extends StatelessWidget {
                           fillColor: Theme.of(context).colorScheme.outline,
                           contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(25.r), borderSide: BorderSide.none),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25.r),
-                            borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25.r),
-                            borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.5),
-                          ),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(25.r), borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.2)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(25.r), borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.5)),
                         ),
                       ),
                     ),
@@ -166,10 +141,7 @@ class MessageInputArea extends StatelessWidget {
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(25.r),
                                 onTap: sendMessage,
-                                child: Padding(
-                                  padding: EdgeInsets.all(10.r),
-                                  child: Icon(Icons.send_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 22.sp),
-                                ),
+                                child: Padding(padding: EdgeInsets.all(10.r), child: Icon(Icons.send_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 22.sp)),
                               ),
                             )
                             : Container(
@@ -187,11 +159,7 @@ class MessageInputArea extends StatelessWidget {
                                             .push(
                                               PageRouteBuilder(
                                                 transitionDuration: Duration(milliseconds: 500),
-                                                pageBuilder:
-                                                    (_, __, ___) => BlocProvider(
-                                                      create: (context) => CameraBloc()..add(CameraInitEvent()),
-                                                      child: const MediaPickerPage(),
-                                                    ),
+                                                pageBuilder: (_, __, ___) => BlocProvider(create: (context) => CameraBloc()..add(CameraInitEvent()), child: const MediaPickerPage()),
                                               ),
                                             )
                                             .then((imageFile) {

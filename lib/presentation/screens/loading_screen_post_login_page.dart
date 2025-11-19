@@ -20,12 +20,8 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
   late AnimationController _controller;
   late Animation<double> _animation;
 
-  final String _logTag = 'LoadingScreen';
-
-  bool _animationCompleted = false;
-  bool _userLoggedIn = false;
-
   late PostLoginBloc _postLoginBloc;
+  final TokenServices _tokenServices = TokenServices();
 
   @override
   void initState() {
@@ -36,60 +32,52 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
     _controller.forward();
 
     _postLoginBloc = context.read<PostLoginBloc>();
-
-    _tokenCheck();
-
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _animationCompleted = true;
-        _navigateLogic();
-      }
-    });
+    initializer();
   }
 
-  void _tokenCheck() {
-    TokenServices().tokenExists().then((exists) {
-      _userLoggedIn = exists;
-      if (exists) {
-        _postLoginBloc.add(StartPostLoginEvent());
-      }
-    });
+  Future<void> initializer() async {
+    await _tokenCheck();
   }
 
-  void _navigateLogic() {
-    final state = _postLoginBloc.state;
-    if (!_animationCompleted && state is! PostLoginLoaded) return;
+  Future<void> _tokenCheck() async {
+    bool exists = await _tokenServices.tokenExists();
 
-    if (_userLoggedIn && state is PostLoginLoaded) {
-      if (state.goToSignUpPage) {
-        navigateWithFade(context, BlocProvider(create: (context) => SignupBloc(), child: SingupFlowPage(initialIndex: -1)));
-      } else {
-        navigateWithFade(context, MatchMakingPage());
-      }
+    if (exists) {
+      await _tokenServices.registerUserIdIfExists();
+      _postLoginBloc.add(StartPostLoginEvent());
     } else {
-      navigateWithFade(context, LandingPage());
+      _controller.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          navigateWithFade(context, LandingPage(), allowBack: false);
+        }
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final double size = MediaQuery.of(context).size.width * 0.5;
-    bool isDarkMode = Theme.of(context).brightness != Brightness.dark;
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? Colors.white : Colors.black,
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       body: BlocListener<PostLoginBloc, PostLoginState>(
         listener: (context, state) {
-          if (state is PostLoginError || state is PostLoginLoaded) {}
+          if (state is PostLoginLoaded) {
+            if (state.goToSignUpPage) {
+              navigateWithFade(context, BlocProvider(create: (context) => SignupBloc(), child: SingupFlowPage(initialIndex: -1)), allowBack: false);
+            } else {
+              navigateWithFade(context, MatchMakingPage(), allowBack: false);
+            }
+          } else if (state is PostLoginError) {
+            navigateWithFade(context, LandingPage(), allowBack: false);
+          }
         },
         child: Center(
           child: SizedBox(
             width: size,
             height: size,
-            child: FadeTransition(
-              opacity: _animation,
-              child: CustomPaint(size: Size(size, size), painter: DrawingPainter(_animation, isDarkMode ? Colors.black : Colors.white)),
-            ),
+            child: FadeTransition(opacity: _animation, child: CustomPaint(size: Size(size, size), painter: DrawingPainter(_animation, isDarkMode ? Colors.white : Colors.black))),
           ),
         ),
       ),

@@ -41,16 +41,14 @@ class CustomHttpClient {
 
   Future<http.Response> _sendWithAuth(Future<http.Response> Function(String accessToken) request) async {
     String? accessToken = await _storage.read(key: 'access_token');
-    if (accessToken == null) throw Exception("No access token found");
 
-    http.Response response = await request(accessToken);
+    http.Response response = await request(accessToken!);
 
     if (response.statusCode == 401) {
       final refreshed = await refreshToken();
       if (refreshed) {
         accessToken = await _storage.read(key: 'access_token');
-        if (accessToken == null) throw Exception("Failed to refresh token");
-        response = await request(accessToken);
+        response = await request(accessToken!);
       } else {
         throw Exception("Session expired. Please login again.");
       }

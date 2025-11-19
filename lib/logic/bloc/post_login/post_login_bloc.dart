@@ -20,14 +20,8 @@ class PostLoginBloc extends Bloc<PostLoginEvent, PostLoginState> {
   final ProfileBloc profileBloc;
   final ConnectionsBloc connectionsBloc;
 
-  PostLoginBloc({
-    required this.matchesBloc,
-    required this.webSocketBloc,
-    required this.chatSocketsBloc,
-    required this.connectionsSocketBloc,
-    required this.profileBloc,
-    required this.connectionsBloc,
-  }) : super(PostLoginInitial()) {
+  PostLoginBloc({required this.matchesBloc, required this.webSocketBloc, required this.chatSocketsBloc, required this.connectionsSocketBloc, required this.profileBloc, required this.connectionsBloc})
+    : super(PostLoginInitial()) {
     on<StartPostLoginEvent>((event, emit) async {
       emit(PostLoginLoading());
 
@@ -38,6 +32,7 @@ class PostLoginBloc extends Bloc<PostLoginEvent, PostLoginState> {
         // We are checking if the user has completed full sign-up
         // This will return true if the user has not completed sign-up as there is no university_id = -1
         final bool goToSignUpPage = (profileBloc.state as ProfileLoaded).user.universityId == -1;
+        log("goToSignUpPage: $goToSignUpPage");
         if (goToSignUpPage) {
           log("User has not completed sign-up. Redirecting to sign-up page.");
           emit(PostLoginLoaded(goToSignUpPage: goToSignUpPage));
