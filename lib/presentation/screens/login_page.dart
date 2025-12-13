@@ -1,9 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/logic/bloc/otp/otp_bloc.dart';
 import 'package:linkup/presentation/components/login/text_input_field.dart';
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/data/http_services/auth_http_services/auth_http_services.dart';
+import 'package:linkup/presentation/screens/forgot_password_modal_page.dart';
+import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/presentation/utils/show_error_toast.dart';
 
 class LoginPage extends StatefulWidget {
@@ -31,6 +36,65 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {
       _isFormValid = isEmailValid && isPasswordValid;
+    });
+  }
+
+  void _showForgotPopup() {
+    double modalHeight = 0.35;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void onTabChange(String value) {
+              double newHeight;
+
+              switch (value) {
+                case "email-entry":
+                  newHeight = 0.35;
+                  break;
+                case "otp-entry":
+                  newHeight = 0.35;
+                  break;
+                case "password-entry":
+                  newHeight = 0.5;
+                  break;
+
+                default:
+                  newHeight = 0.35;
+              }
+
+              setModalState(() {
+                modalHeight = newHeight;
+              });
+            }
+
+            return ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 100),
+                height: (MediaQuery.of(context).size.height * modalHeight) + MediaQuery.of(context).viewInsets.bottom,
+                child: BlocProvider(
+                  create: (context) => OtpBloc(),
+                  child: ForgotPasswordModalPage(
+                    tabHeightChange: (String value) {
+                      onTabChange(value);
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).then((value) async {
+      if (value is bool && value) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        Navigator.of(context).push(CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()));
+      }
     });
   }
 
@@ -113,20 +177,19 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
-                  onPressed: () {},
-                  child: Text('Forgot Password ?', style: TextStyle(fontSize: 14.sp, color: Colors.blue, fontWeight: FontWeight.w500)),
+                  onPressed: () {
+                    // Open another modal which will overlap the outer login and signup
+                    _showForgotPopup();
+                  },
+                  child: Text(
+                    'Forgot Password ?',
+                    style: TextStyle(fontSize: 14.sp, color: Colors.blue, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ],
             ),
 
-            ButtonBuilder(
-              width: double.infinity,
-              height: 55.h,
-              text: 'Log In',
-              onPressed: _loginLogic,
-              isEnabled: _isFormValid,
-              isLoading: _isLoading,
-            ),
+            ButtonBuilder(width: double.infinity, height: 55.h, text: 'Log In', onPressed: _loginLogic, isEnabled: _isFormValid, isLoading: _isLoading),
           ],
         ),
       ),

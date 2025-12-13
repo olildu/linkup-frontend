@@ -10,6 +10,7 @@ import 'package:linkup/data/http_services/common_http_services/common_http_servi
 import 'package:linkup/data/models/candidate_info_model.dart';
 import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/data/models/user_model.dart';
+import 'package:linkup/data/token/token_services.dart';
 import 'package:linkup/logic/bloc/profile/own/profile_bloc.dart';
 import 'package:linkup/logic/bloc/signup/signup_bloc.dart';
 import 'package:linkup/presentation/components/common/image_picker_builder.dart';
@@ -17,7 +18,7 @@ import 'package:linkup/presentation/components/common/text_field_builder.dart';
 import 'package:linkup/presentation/components/common/title_sub_builder.dart';
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/presentation/constants/colors.dart';
-import 'package:linkup/presentation/screens/settings_page.dart';
+import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/presentation/screens/singup_flow_page.dart';
 import 'package:linkup/presentation/utils/show_error_toast.dart';
 
@@ -63,7 +64,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     }
 
     context.read<ProfileBloc>().add(
-      ProfileUpdateEvent(userUpdatedModel: UpdateMetadataModel(photos: finalImages, profilePicture: pfpMetadata?['profile_metadata'])),
+      ProfileUpdateEvent(
+        userUpdatedModel: UpdateMetadataModel(photos: finalImages, profilePicture: pfpMetadata?['profile_metadata']),
+      ),
     );
 
     setState(() {
@@ -92,14 +95,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             Navigator.pop(context);
           },
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings_rounded, color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () {
-              Navigator.push(context, CupertinoPageRoute(builder: (context) => SettingsPage()));
-            },
-          ),
-        ],
       ),
 
       body: PopScope(
@@ -116,7 +111,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               builder: (context, state) {
                 if (state is ProfileError) {
                   return Center(
-                    child: Text('Error loading profile settings', style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.error)),
+                    child: Text(
+                      'Error loading profile settings',
+                      style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.error),
+                    ),
                   );
                 } else if (state is ProfileLoaded) {
                   final UserModel user = state.user;
@@ -167,9 +165,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                     height: 50.h,
                                     onPressed: () {
                                       FocusScope.of(context).unfocus();
-                                      context.read<ProfileBloc>().add(
-                                        ProfileUpdateEvent(userUpdatedModel: UpdateMetadataModel(about: aboutMeContent)),
-                                      );
+                                      context.read<ProfileBloc>().add(ProfileUpdateEvent(userUpdatedModel: UpdateMetadataModel(about: aboutMeContent)));
                                       setState(() {
                                         aboutMeChanged = false;
                                       });
@@ -185,16 +181,37 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         BuildTitleSubtitle(title: 'Your Information', subtitle: 'Select or update your information'),
                         Gap(20.h),
                         Column(
-                          children:
-                              candidateInformation.asIconMap(showGender: false).entries.map((entry) {
-                                final icon = entry.value['icon'] as IconData;
-                                final value = entry.value['value'];
-                                final title = entry.value['title'] as String;
-                                final index = entry.value['index'] as int;
+                          children: candidateInformation.asIconMap(showGender: false).entries.map((entry) {
+                            final icon = entry.value['icon'] as IconData;
+                            final value = entry.value['value'];
+                            final title = entry.value['title'] as String;
+                            final index = entry.value['index'] as int;
 
-                                return _buildOptions(icon, title, value, index, candidateInformation);
-                              }).toList(),
+                            return _buildOptions(icon, title, value, index, candidateInformation);
+                          }).toList(),
                         ),
+
+                        Gap(20.h),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStrongOption(
+                                textColor: AppColors.primary,
+                                title: "Logout",
+                                onTap: () async {
+                                  await TokenServices().clearTokens();
+                                  Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()), (Route<dynamic> route) => false);
+                                },
+                              ),
+                            ),
+                            Gap(10.w),
+                            Expanded(
+                              child: _buildStrongOption(textColor: Colors.red, title: "Delete Account"),
+                            ),
+                          ],
+                        ),
+                        Gap(20.h),
                       ],
                     ),
                   );
@@ -215,11 +232,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         Navigator.push(
           context,
           CupertinoPageRoute(
-            builder:
-                (context) => BlocProvider(
-                  create: (context) => SignupBloc(isSigningUp: false),
-                  child: SingupFlowPage(initialIndex: index, initialData: optionsData.toJson()),
-                ),
+            builder: (context) => BlocProvider(
+              create: (context) => SignupBloc(isSigningUp: false),
+              child: SingupFlowPage(initialIndex: index, initialData: optionsData.toJson()),
+            ),
           ),
         );
       },
@@ -229,7 +245,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           children: [
             Icon(icon, size: 20.sp, color: Theme.of(context).colorScheme.onSurface),
             Gap(10.w),
-            Text(title, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+            Text(
+              title,
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+            ),
             const Spacer(),
             Text(
               data ?? "None",
@@ -242,6 +261,22 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStrongOption({required String title, required Color textColor, Function? onTap}) {
+    return ButtonBuilder(
+      text: title,
+      onPressed: () {
+        if (onTap != null) {
+          onTap();
+        }
+      },
+      backgroundColor: const Color.fromARGB(255, 35, 35, 35),
+      textColor: textColor,
+      isFullWidth: true,
+      borderRadius: 50.r,
+      height: 40.h,
     );
   }
 }

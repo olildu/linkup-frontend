@@ -43,24 +43,30 @@ class _LoginSignupPageState extends State<LoginSignupPage> with SingleTickerProv
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
           child: Column(
             children: [
-              Container(
-                height: 50.h,
-                decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12.r)),
-                child: TabBar(
-                  controller: _tabController,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  padding: EdgeInsets.all(3.sp),
-                  dividerColor: Colors.transparent,
-                  indicator: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10.r),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                child: Container(
+                  height: 50.h,
+                  decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12.r)),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    padding: EdgeInsets.all(3.sp),
+                    dividerColor: Colors.transparent,
+                    indicator: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10.r),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                    ),
+                    labelColor: Colors.black,
+                    unselectedLabelColor: Colors.grey[600],
+                    labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.sp),
+                    unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.sp),
+                    tabs: const [
+                      Tab(text: 'Log In'),
+                      Tab(text: 'Sign Up'),
+                    ],
                   ),
-                  labelColor: Colors.black,
-                  unselectedLabelColor: Colors.grey[600],
-                  labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.sp),
-                  unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.sp),
-                  tabs: const [Tab(text: 'Log In'), Tab(text: 'Sign Up')],
                 ),
               ),
 
