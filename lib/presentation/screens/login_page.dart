@@ -83,6 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                     tabHeightChange: (String value) {
                       onTabChange(value);
                     },
+                    filledEmail : _emailController.text,
                   ),
                 ),
               ),

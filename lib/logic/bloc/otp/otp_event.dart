@@ -8,16 +8,22 @@ final class SendOTPEvent extends OtpBlocEvent {
   SendOTPEvent({required this.email});
 }
 
-final class SendPasswordEvent extends OtpBlocEvent {
+final class CompleteSignUpEvent extends OtpBlocEvent {
   final String password;
-  SendPasswordEvent({required this.password});
+  CompleteSignUpEvent({required this.password});
 }
 
 final class VerifyOTPEvent extends OtpBlocEvent {
   final int otp;
   final String email;
+  final EmailOTPSubject subject;
 
-  VerifyOTPEvent({required this.otp, required this.email});
+  VerifyOTPEvent({required this.otp, required this.email, required this.subject});
+}
+
+final class ResetPasswordSubmittedEvent extends OtpBlocEvent {
+  final String password;
+  ResetPasswordSubmittedEvent({required this.password});
 }
 
 final class OtpVerificationErrorEvent extends OtpBlocEvent {}

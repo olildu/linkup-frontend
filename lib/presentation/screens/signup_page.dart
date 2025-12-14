@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/data/enums/otp_subject_enum.dart';
 import 'package:linkup/logic/bloc/otp/otp_bloc.dart';
 import 'package:linkup/presentation/components/login/otp_input_field.dart';
 import 'package:linkup/presentation/components/login/text_input_field.dart';
@@ -131,7 +132,10 @@ class _SignUpPageState extends State<SignUpPage> {
         if (_hasError)
           Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0.h, horizontal: 5.w),
-            child: Text('Please recheck your OTP code.', style: TextStyle(color: Colors.red, fontSize: 14.sp)),
+            child: Text(
+              'Please recheck your OTP code.',
+              style: TextStyle(color: Colors.red, fontSize: 14.sp),
+            ),
           ),
 
         Spacer(),
@@ -141,7 +145,7 @@ class _SignUpPageState extends State<SignUpPage> {
           height: 55.h,
           text: 'Submit OTP',
           onPressed: () {
-            _otpBloc.add(VerifyOTPEvent(otp: int.parse(_otpController.text.trim()), email: _emailController.text.trim()));
+            _otpBloc.add(VerifyOTPEvent(otp: int.parse(_otpController.text.trim()), email: _emailController.text.trim(), subject: EmailOTPSubject.emailVerification));
           },
           isLoading: state is OTPVerificationLoading,
           isEnabled: _otpController.text.trim().length == 6,
@@ -156,27 +160,18 @@ class _SignUpPageState extends State<SignUpPage> {
         mainAxisAlignment: MainAxisAlignment.start,
         key: key,
         children: [
-          TextInputField(
-            label: 'Password',
-            hintText: 'Enter your new password',
-            obscureText: true,
-            controller: _passwordController,
-            hasError: _hasError,
-          ),
+          TextInputField(label: 'Password', hintText: 'Enter your new password', obscureText: true, controller: _passwordController, hasError: _hasError),
 
           Gap(10.h),
 
-          TextInputField(
-            label: 'Confirm Password',
-            hintText: 'Re-enter your new password',
-            controller: _confirmPasswordController,
-            hasError: _hasError,
-            obscureText: true,
-          ),
+          TextInputField(label: 'Confirm Password', hintText: 'Re-enter your new password', controller: _confirmPasswordController, hasError: _hasError, obscureText: true),
           if (_hasError)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 8.0.h, horizontal: 5.w),
-              child: Text('Please enter a valid password.', style: TextStyle(color: Colors.red, fontSize: 14.sp)),
+              child: Text(
+                'Please enter a valid password.',
+                style: TextStyle(color: Colors.red, fontSize: 14.sp),
+              ),
             ),
 
           Gap(60.h),
@@ -189,7 +184,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 height: 55.h,
                 text: 'Save password',
                 onPressed: () {
-                  _otpBloc.add(SendPasswordEvent(password: _passwordController.text.trim()));
+                  _otpBloc.add(CompleteSignUpEvent(password: _passwordController.text.trim()));
                 },
                 isLoading: state is OTPPasswordLoading,
                 isEnabled: _isEmailValid,

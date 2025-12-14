@@ -2,7 +2,7 @@
 
 import 'dart:io';
 
-final bool prod = true;
+final bool prod = false;
 
 String getBASEURL() {
   if (prod) {

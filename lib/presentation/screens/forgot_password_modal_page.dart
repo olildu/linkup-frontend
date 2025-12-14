@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/data/enums/otp_subject_enum.dart';
 import 'package:linkup/logic/bloc/otp/otp_bloc.dart';
 import 'package:linkup/presentation/components/login/text_input_field.dart';
 import 'package:linkup/presentation/components/login/otp_input_field.dart';
@@ -12,8 +13,9 @@ import 'package:linkup/presentation/constants/colors.dart';
 
 class ForgotPasswordModalPage extends StatefulWidget {
   final Function(String) tabHeightChange;
+  final String filledEmail;
 
-  const ForgotPasswordModalPage({super.key, required this.tabHeightChange});
+  const ForgotPasswordModalPage({super.key, required this.tabHeightChange, required this.filledEmail});
 
   @override
   State<ForgotPasswordModalPage> createState() => _ForgotPasswordModalPageState();
@@ -32,16 +34,21 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
   bool _isConfirmPasswordValid = false;
   bool _hasError = false;
 
+  // Added state variables for password visibility
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
+
   @override
   void initState() {
     super.initState();
-    // Assuming OtpBloc is provided by the parent widget (LoginPage's _showForgotPopup)
     _otpBloc = context.read<OtpBloc>();
 
     _emailController.addListener(_validateFields);
     _passwordController.addListener(_validateFields);
     _confirmPasswordController.addListener(_validateFields);
     _otpController.addListener(_validateFields);
+
+    _emailController.value = TextEditingValue(text: widget.filledEmail);
 
     _validateFields();
   }
@@ -60,11 +67,10 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    // Simple email validation
     final isEmailValidNow = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-    // Simple password validation: at least 7 characters
-    final isPasswordValidNow = password.length >= 7;
-    // Confirm password validation
+
+    final isPasswordValidNow = RegExp(r'^(?=.*[A-Z]).{7,}$').hasMatch(password);
+
     final isConfirmPasswordValidNow = isPasswordValidNow && (password == confirmPassword);
 
     if (mounted) {
@@ -85,19 +91,14 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
 
   void _onOTPSubmitted() {
     if (_otpController.text.trim().length == 6) {
-      // Note: The logic in AuthHttpServices::verifyEmailOTP seems to be for signup and provides an email_hash.
-      // This is being reused here for password reset verification.
-      _otpBloc.add(VerifyOTPEvent(otp: int.parse(_otpController.text.trim()), email: _emailController.text.trim()));
+      _otpBloc.add(VerifyOTPEvent(otp: int.parse(_otpController.text.trim()), email: _emailController.text.trim(), subject: EmailOTPSubject.forgotPassword));
       setState(() => _hasError = false);
     }
   }
 
   void _onPasswordSubmitted() {
     if (_isPasswordValid && _isConfirmPasswordValid) {
-      // Note: SendPasswordEvent uses the emailHash from successful OTP verification (in OtpBloc) to complete the signup,
-      // which should be adapted for a password *reset* endpoint in a production app, but for now, we reuse the existing flow
-      // which assumes completion of credentials. The expected result is a success pop.
-      _otpBloc.add(SendPasswordEvent(password: _passwordController.text.trim()));
+      _otpBloc.add(ResetPasswordSubmittedEvent(password: _passwordController.text.trim()));
       setState(() => _hasError = false);
     }
   }
@@ -112,6 +113,15 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
 
   @override
   Widget build(BuildContext context) {
+    // FIX: Defer Navigator.pop to avoid calling setState/Navigator during build in the listener
+    void safeNavigatorPop(bool result) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.pop(context, result);
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -152,7 +162,7 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
                     if (state is OtpSentFailed || state is OTPVerificationFailed || state is OTPPasswordFailed) {
                       setState(() => _hasError = true);
                     } else if (state is OTPPasswordCreated) {
-                      Navigator.pop(context, true);
+                      safeNavigatorPop(true); // Use the safe pop function
                     }
 
                     if (state is OtpBlocInitial || state is OtpSentLoading || state is OtpSentFailed) {
@@ -233,19 +243,29 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
         TextInputField(
           label: 'New Password',
           hintText: 'Enter your new password',
-          obscureText: true,
+          obscureText: _obscureNewPassword, // Use state variable
           controller: _passwordController,
           hasError: _hasError || state is OTPPasswordFailed,
-          toggleObscure: () {}, // Placeholder for toggle visibility logic if needed
+          toggleObscure: () {
+            // Implement toggle callback
+            setState(() {
+              _obscureNewPassword = !_obscureNewPassword;
+            });
+          },
         ),
         Gap(24.h),
         TextInputField(
           label: 'Confirm New Password',
           hintText: 'Re-enter your new password',
-          obscureText: true,
+          obscureText: _obscureConfirmPassword, // Use state variable
           controller: _confirmPasswordController,
           hasError: _hasError || state is OTPPasswordFailed,
-          toggleObscure: () {},
+          toggleObscure: () {
+            // Implement toggle callback
+            setState(() {
+              _obscureConfirmPassword = !_obscureConfirmPassword;
+            });
+          },
         ),
         if ((_hasError || state is OTPPasswordFailed) && (_passwordController.text.isNotEmpty || _confirmPasswordController.text.isNotEmpty))
           Padding(

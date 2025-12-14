@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkup/data/clients/custom_http_client.dart';
+import 'package:linkup/data/enums/otp_subject_enum.dart';
 import 'package:linkup/data/get_it/get_it_registerer.dart';
 import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/presentation/constants/global_constants.dart';
@@ -80,13 +81,9 @@ class AuthHttpServices {
   /// Sends a POST request to the server with the email and OTP for verification.
   /// Returns a `Map<String, dynamic>` containing the response body on success,
   /// or throws an exception if the request fails.
-  static Future<Map<String, dynamic>> verifyEmailOTP({required String email, required int otp}) async {
+  static Future<Map<String, dynamic>> verifyEmailOTP({required String email, required int otp, required EmailOTPSubject subject}) async {
     try {
-      final response = await http.post(
-        Uri.parse("$BASE_URL/verify-otp"),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({"email": email, "otp": otp}),
-      );
+      final response = await http.post(Uri.parse("$BASE_URL/verify-otp"), headers: {'Content-Type': 'application/json'}, body: jsonEncode({"email": email, "otp": otp, "subject": subject.value}));
 
       log('OTP response status: ${response.statusCode}', name: _logTag);
       log('OTP response body: ${response.body}', name: _logTag);
@@ -113,11 +110,7 @@ class AuthHttpServices {
   /// or throws an exception if the request fails.
   static Future<bool> completeSignupCreds({required String emailHash, required String password}) async {
     try {
-      final response = await http.post(
-        Uri.parse("$BASE_URL/signup"),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({"email_hash": emailHash, "password": password}),
-      );
+      final response = await http.post(Uri.parse("$BASE_URL/signup"), headers: {'Content-Type': 'application/json'}, body: jsonEncode({"email_hash": emailHash, "password": password}));
 
       log('Signup response status: ${response.statusCode}', name: _logTag);
       log('Signup response body: ${response.body}', name: _logTag);
@@ -148,6 +141,43 @@ class AuthHttpServices {
     } catch (e, stackTrace) {
       log('Unexpected error during completeSignup: $e', name: _logTag, stackTrace: stackTrace);
       throw Exception('Unexpected error during signup');
+    }
+  }
+
+  /// Resets the user's password using a verified email token.
+  ///
+  /// Sends a POST request to the `/reset-password` endpoint with the
+  /// `email_hash` (verified email token) and the new `password`.
+  ///
+  /// Parameters:
+  /// - [emailHash]: The email verification token obtained after successful OTP verification.
+  /// - [password]: The new password to set for the user.
+  ///
+  /// Returns:
+  /// - `true` if the password reset was successful (i.e., server returns `status: success`),
+  /// - otherwise throws an `Exception` with error details.
+  ///
+  /// Throws:
+  /// - `Exception` on network errors, non-success responses, or unexpected failures.
+  static Future<bool> resetPassword({required String emailHash, required String password}) async {
+    try {
+      final response = await http.post(Uri.parse("$BASE_URL/reset-password"), headers: {'Content-Type': 'application/json'}, body: jsonEncode({"email_hash": emailHash, "password": password}));
+
+      log('Reset Password response status: ${response.statusCode}', name: _logTag);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseBody = jsonDecode(response.body);
+        return responseBody['status'] == 'success';
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception("Password reset failed: ${error['detail'] ?? 'Unknown error'}");
+      }
+    } on http.ClientException catch (e) {
+      log('HTTP ClientException during resetPassword: $e', name: _logTag);
+      throw Exception('Network error during password reset');
+    } catch (e, stackTrace) {
+      log('Unexpected error during resetPassword: $e', name: _logTag, stackTrace: stackTrace);
+      throw Exception('Unexpected error during password reset');
     }
   }
 
