@@ -11,6 +11,17 @@ import 'package:linkup/presentation/constants/global_constants.dart';
 class UserHttpServices {
   static final CustomHttpClient _client = GetIt.instance<CustomHttpClient>();
 
+  Future<bool> deleteAccount() async {
+    final response = await _client.delete(Uri.parse("$BASE_URL/user/delete"));
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      log('Error deleting account: ${response.statusCode}');
+      throw Exception('Failed to delete account');
+    }
+  }
+
   Future<UserModel> getProfileSettings() async {
     final response = await _client.get(Uri.parse("$BASE_URL/me"));
 

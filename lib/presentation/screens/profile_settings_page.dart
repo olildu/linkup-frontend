@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkup/data/enums/message_type_enum.dart';
 import 'package:linkup/data/http_services/common_http_services/common_http_services.dart';
+import 'package:linkup/data/http_services/user_http_services/user_http_services.dart';
 import 'package:linkup/data/models/candidate_info_model.dart';
 import 'package:linkup/data/models/update_metadata_model.dart';
 import 'package:linkup/data/models/user_model.dart';
@@ -207,7 +208,38 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             ),
                             Gap(10.w),
                             Expanded(
-                              child: _buildStrongOption(textColor: Colors.red, title: "Delete Account"),
+                              child: // Inside _buildStrongOption for "Delete Account"
+                              _buildStrongOption(
+                                textColor: Colors.red,
+                                title: "Delete Account",
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Delete Account?"),
+                                      content: const Text("This action cannot be undone. You will lose all your matches and chats."),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                                        TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context); // Close dialog
+                                            try {
+                                              await UserHttpServices().deleteAccount();
+                                              await TokenServices().clearTokens();
+                                              if (context.mounted) {
+                                                Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()), (Route<dynamic> route) => false);
+                                              }
+                                            } catch (e) {
+                                              showToast(context: context, message: "Failed to delete account");
+                                            }
+                                          },
+                                          child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ],
                         ),

@@ -27,23 +27,28 @@ const ChatsTableSchema = CollectionSchema(
       name: r'chatRoomId',
       type: IsarType.long,
     ),
-    r'message': PropertySchema(
+    r'isDeleted': PropertySchema(
       id: 2,
+      name: r'isDeleted',
+      type: IsarType.bool,
+    ),
+    r'message': PropertySchema(
+      id: 3,
       name: r'message',
       type: IsarType.string,
     ),
     r'profilePictureMetaDataJson': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'profilePictureMetaDataJson',
       type: IsarType.string,
     ),
     r'unseenCounter': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'unseenCounter',
       type: IsarType.long,
     ),
     r'username': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'username',
       type: IsarType.string,
     )
@@ -74,7 +79,12 @@ int _chatsTableEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
-  bytesCount += 3 + object.profilePictureMetaDataJson.length * 3;
+  {
+    final value = object.profilePictureMetaDataJson;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.username.length * 3;
   return bytesCount;
 }
@@ -87,10 +97,11 @@ void _chatsTableSerialize(
 ) {
   writer.writeLong(offsets[0], object.chatID);
   writer.writeLong(offsets[1], object.chatRoomId);
-  writer.writeString(offsets[2], object.message);
-  writer.writeString(offsets[3], object.profilePictureMetaDataJson);
-  writer.writeLong(offsets[4], object.unseenCounter);
-  writer.writeString(offsets[5], object.username);
+  writer.writeBool(offsets[2], object.isDeleted);
+  writer.writeString(offsets[3], object.message);
+  writer.writeString(offsets[4], object.profilePictureMetaDataJson);
+  writer.writeLong(offsets[5], object.unseenCounter);
+  writer.writeString(offsets[6], object.username);
 }
 
 ChatsTable _chatsTableDeserialize(
@@ -103,10 +114,11 @@ ChatsTable _chatsTableDeserialize(
   object.chatID = reader.readLong(offsets[0]);
   object.chatRoomId = reader.readLong(offsets[1]);
   object.id = id;
-  object.message = reader.readStringOrNull(offsets[2]);
-  object.profilePictureMetaDataJson = reader.readString(offsets[3]);
-  object.unseenCounter = reader.readLong(offsets[4]);
-  object.username = reader.readString(offsets[5]);
+  object.isDeleted = reader.readBool(offsets[2]);
+  object.message = reader.readStringOrNull(offsets[3]);
+  object.profilePictureMetaDataJson = reader.readStringOrNull(offsets[4]);
+  object.unseenCounter = reader.readLong(offsets[5]);
+  object.username = reader.readString(offsets[6]);
   return object;
 }
 
@@ -122,12 +134,14 @@ P _chatsTableDeserializeProp<P>(
     case 1:
       return (reader.readLong(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
+      return (reader.readLong(offset)) as P;
+    case 6:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -386,6 +400,16 @@ extension ChatsTableQueryFilter
     });
   }
 
+  QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition> isDeletedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isDeleted',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition> messageIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -536,8 +560,26 @@ extension ChatsTableQueryFilter
   }
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
+      profilePictureMetaDataJsonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'profilePictureMetaDataJson',
+      ));
+    });
+  }
+
+  QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
+      profilePictureMetaDataJsonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'profilePictureMetaDataJson',
+      ));
+    });
+  }
+
+  QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
       profilePictureMetaDataJsonEqualTo(
-    String value, {
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -551,7 +593,7 @@ extension ChatsTableQueryFilter
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
       profilePictureMetaDataJsonGreaterThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -567,7 +609,7 @@ extension ChatsTableQueryFilter
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
       profilePictureMetaDataJsonLessThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -583,8 +625,8 @@ extension ChatsTableQueryFilter
 
   QueryBuilder<ChatsTable, ChatsTable, QAfterFilterCondition>
       profilePictureMetaDataJsonBetween(
-    String lower,
-    String upper, {
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -896,6 +938,18 @@ extension ChatsTableQuerySortBy
     });
   }
 
+  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
   QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> sortByMessage() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'message', Sort.asc);
@@ -985,6 +1039,18 @@ extension ChatsTableQuerySortThenBy
     });
   }
 
+  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
   QueryBuilder<ChatsTable, ChatsTable, QAfterSortBy> thenByMessage() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'message', Sort.asc);
@@ -1050,6 +1116,12 @@ extension ChatsTableQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ChatsTable, ChatsTable, QDistinct> distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isDeleted');
+    });
+  }
+
   QueryBuilder<ChatsTable, ChatsTable, QDistinct> distinctByMessage(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1099,13 +1171,19 @@ extension ChatsTableQueryProperty
     });
   }
 
+  QueryBuilder<ChatsTable, bool, QQueryOperations> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isDeleted');
+    });
+  }
+
   QueryBuilder<ChatsTable, String?, QQueryOperations> messageProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'message');
     });
   }
 
-  QueryBuilder<ChatsTable, String, QQueryOperations>
+  QueryBuilder<ChatsTable, String?, QQueryOperations>
       profilePictureMetaDataJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'profilePictureMetaDataJson');

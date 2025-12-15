@@ -7,6 +7,13 @@ import 'package:linkup/presentation/constants/global_constants.dart';
 class CustomHttpClient {
   final _storage = GetIt.instance<FlutterSecureStorage>();
 
+  Future<http.Response> delete(Uri uri, {Map<String, String>? headers, Object? body}) async {
+    return _sendWithAuth((token) {
+      final allHeaders = _mergeHeaders(token, headers);
+      return http.delete(uri, headers: allHeaders, body: body);
+    });
+  }
+
   Future<http.Response> post(Uri uri, {Map<String, String>? headers, Object? body}) async {
     return _sendWithAuth((token) {
       final allHeaders = _mergeHeaders(token, headers);
@@ -21,18 +28,12 @@ class CustomHttpClient {
     });
   }
 
-  Future<http.Response> postMultipart(
-    Uri uri, {
-    Map<String, String>? headers,
-    required Map<String, String> fields,
-    required Future<List<http.MultipartFile>> Function() buildFiles,
-  }) async {
+  Future<http.Response> postMultipart(Uri uri, {Map<String, String>? headers, required Map<String, String> fields, required Future<List<http.MultipartFile>> Function() buildFiles}) async {
     return _sendWithAuth((token) async {
-      final request =
-          http.MultipartRequest("POST", uri)
-            ..headers.addAll({'Authorization': 'Bearer $token', ...?headers})
-            ..fields.addAll(fields)
-            ..files.addAll(await buildFiles());
+      final request = http.MultipartRequest("POST", uri)
+        ..headers.addAll({'Authorization': 'Bearer $token', ...?headers})
+        ..fields.addAll(fields)
+        ..files.addAll(await buildFiles());
 
       final streamedResponse = await request.send();
       return http.Response.fromStream(streamedResponse);
@@ -65,11 +66,7 @@ class CustomHttpClient {
     final refreshToken = await _storage.read(key: 'refresh_token');
     if (refreshToken == null) return false;
 
-    final res = await http.post(
-      Uri.parse('$BASE_URL/refresh'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'refresh_token': refreshToken}),
-    );
+    final res = await http.post(Uri.parse('$BASE_URL/refresh'), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'refresh_token': refreshToken}));
 
     if (res.statusCode == 200) {
       final body = jsonDecode(res.body);

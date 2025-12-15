@@ -3,11 +3,12 @@ import 'package:linkup/data/enums/message_type_enum.dart';
 class ChatsConnectionModel {
   final int id;
   final String username;
-  final Map profilePictureMetaData;
+  final Map profilePictureMetaData; 
   final int chatRoomId;
   final int unseenCounter;
   final String? message;
   final MessageType messageType;
+  final bool isDeleted;
 
   ChatsConnectionModel({
     required this.id,
@@ -17,6 +18,7 @@ class ChatsConnectionModel {
     required this.unseenCounter,
     this.message,
     this.messageType = MessageType.text,
+    this.isDeleted = false,
   });
 
   factory ChatsConnectionModel.fromJson(Map<String, dynamic> json) {
@@ -28,18 +30,11 @@ class ChatsConnectionModel {
       unseenCounter: json['unseen_counter'],
       message: json['last_message'],
       messageType: messageTypeFromString(json['last_message_media_type']),
+      isDeleted: json['is_deleted'] ?? false,
     );
   }
 
-  ChatsConnectionModel copyWith({
-    int? id,
-    String? username,
-    Map? profilePictureMetaData,
-    int? chatRoomId,
-    int? unseenCounter,
-    String? message,
-    MessageType? messageType,
-  }) {
+  ChatsConnectionModel copyWith({int? id, String? username, Map? profilePictureMetaData, int? chatRoomId, int? unseenCounter, String? message, MessageType? messageType}) {
     return ChatsConnectionModel(
       id: id ?? this.id,
       username: username ?? this.username,

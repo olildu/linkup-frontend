@@ -10,30 +10,38 @@ class ChatsTable {
 
   late int chatID;
   late String username;
-  late String profilePictureMetaDataJson; 
+  String? profilePictureMetaDataJson;
   late int chatRoomId;
   late int unseenCounter;
   late String? message;
+  bool isDeleted = false; // <--- 1. ADD NEW FIELD HERE
 
   ChatsTable();
 
   ChatsTable.fromChat(ChatsConnectionModel chatsConnectionModel) {
     chatID = chatsConnectionModel.id;
     username = chatsConnectionModel.username;
-    profilePictureMetaDataJson = jsonEncode(chatsConnectionModel.profilePictureMetaData);
+    // Handle null profile picture
+    profilePictureMetaDataJson = chatsConnectionModel.profilePictureMetaData != null 
+        ? jsonEncode(chatsConnectionModel.profilePictureMetaData) 
+        : null;
     chatRoomId = chatsConnectionModel.chatRoomId;
     unseenCounter = chatsConnectionModel.unseenCounter;
     message = chatsConnectionModel.message;
+    isDeleted = chatsConnectionModel.isDeleted; // <--- 2. ASSIGN NEW FIELD HERE
   }
 
   ChatsConnectionModel toChatsConnectionModel() {
     return ChatsConnectionModel(
       id: chatID,
       username: username,
-      profilePictureMetaData: jsonDecode(profilePictureMetaDataJson),
+      profilePictureMetaData: profilePictureMetaDataJson != null 
+          ? jsonDecode(profilePictureMetaDataJson!) 
+          : null,
       chatRoomId: chatRoomId,
       unseenCounter: unseenCounter,
       message: message,
+      isDeleted: isDeleted, // <--- 3. RETURN NEW FIELD HERE
     );
   }
 }
