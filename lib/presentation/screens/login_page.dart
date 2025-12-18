@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -83,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                     tabHeightChange: (String value) {
                       onTabChange(value);
                     },
-                    filledEmail : _emailController.text,
+                    filledEmail: _emailController.text,
                   ),
                 ),
               ),
@@ -138,8 +139,10 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
 
-    _emailController.value = const TextEditingValue(text: 'ebinsanthosh06@gmail.com');
-    _passwordController.value = const TextEditingValue(text: 'OOMBmyrefc!12');
+    if (kDebugMode) {
+      _emailController.value = const TextEditingValue(text: 'ebinsanthosh06@gmail.com');
+      _passwordController.value = const TextEditingValue(text: 'OOMBmyrefc!12');
+    }
 
     validateEmailPassword();
 

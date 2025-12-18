@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io'; // Required for WebSocket.connect
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
@@ -71,12 +72,17 @@ abstract class BaseSocketService {
     log("Connecting to $uri (Attempt ${_reconnectAttemptCount + 1})", name: logTag);
 
     try {
-      _channel = IOWebSocketChannel.connect(
-        uri,
+      // FIX: Use WebSocket.connect directly to catch handshake errors (403) synchronously
+      final WebSocket ws = await WebSocket.connect(
+        uri.toString(),
         headers: {'Authorization': 'Bearer $_authToken'},
-        pingInterval: const Duration(seconds: 1),
-        connectTimeout: const Duration(seconds: 5),
-      );
+      ).timeout(const Duration(seconds: 5));
+
+      // Set ping interval directly on the raw socket
+      ws.pingInterval = const Duration(seconds: 1);
+
+      // Wrap the raw socket in the channel
+      _channel = IOWebSocketChannel(ws);
 
       _channel!.stream.listen(
         (data) {
@@ -100,18 +106,14 @@ abstract class BaseSocketService {
             _updateConnectionStatusController();
           }
         },
-        onError: (error) async {
+        onError: (error) {
+          // This catches errors occurring AFTER connection is established
           _isConnecting = false;
-          log("Connection error: $error", name: logTag);
+          log("Stream error: $error", name: logTag);
           _channel = null;
           if (!_manualDisconnect) {
             _disconnectController.add("Error: $error");
-            if (error.contains('401')) {
-              await _client.refreshToken();
-              _scheduleReconnect();
-            } else {
-              _scheduleReconnect();
-            }
+            _scheduleReconnect();
           }
           _updateConnectionStatusController();
         },
@@ -121,11 +123,27 @@ abstract class BaseSocketService {
       _isConnecting = false;
       log("Connected successfully.", name: logTag);
     } catch (e) {
+      // THIS CATCH BLOCK NOW HANDLES THE 403 FORBIDDEN ERROR
       _isConnecting = false;
       log("Failed to connect: $e", name: logTag);
       _channel = null;
+
       if (!_manualDisconnect) {
         _disconnectController.add("Connection failed: $e");
+
+        // Check for 403/401 here to trigger token refresh
+        final errorString = e.toString();
+        if (errorString.contains('401') || errorString.contains('403')) {
+          log("Token expired/invalid (403/401) during handshake. Refreshing...", name: logTag);
+          try {
+            await _client.refreshToken();
+            // Update auth token for the next attempt
+            _authToken = await _secureStorage.read(key: 'access_token');
+          } catch (refreshError) {
+            log("Token refresh failed: $refreshError", name: logTag);
+          }
+        }
+        
         _scheduleReconnect();
       }
       _updateConnectionStatusController();

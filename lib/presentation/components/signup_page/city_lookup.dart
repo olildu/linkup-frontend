@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -67,33 +66,32 @@ class _CityLookupState extends State<CityLookup> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        final inputHeight = 80.h;
-        final gapHeight = 30.h;
-
-        final remainingHeight = c.maxHeight - inputHeight - gapHeight;
-
-        return Column(
-          children: [
-            TextInput(label: "City", placeHolder: "Search your hometown", controller: _controller, onChanged: _onSearchChanged),
-            Gap(gapHeight),
-            SizedBox(
-              height: remainingHeight,
-              child: SingleChildScrollView(
-                child: OptionBuilder(
-                  options: _searchResults,
-                  textSize: 13,
-                  onChanged: (val) {
-                    _controller.text = val;
-                    widget.onChanged(val);
-                  },
-                ),
-              ),
+    // REFACTORED: Removed LayoutBuilder and manual math. 
+    // Using Expanded ensures it fills available space safely.
+    return Column(
+      children: [
+        TextInput(
+          label: "City", 
+          placeHolder: "Search your hometown", 
+          controller: _controller, 
+          onChanged: _onSearchChanged
+        ),
+        
+        Gap(30.h),
+        
+        Expanded(
+          child: SingleChildScrollView(
+            child: OptionBuilder(
+              options: _searchResults,
+              textSize: 13,
+              onChanged: (val) {
+                _controller.text = val;
+                widget.onChanged(val);
+              },
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -86,4 +86,26 @@ class UserHttpServices {
       throw Exception('Failed to fetch. Status: ${response.statusCode} Server-Response: ${response.body}');
     }
   }
+
+  Future<void> blockUser({required int userId}) async {
+    final response = await _client.post(Uri.parse("$BASE_URL/user/block"), body: json.encode({"blocked_user_id": userId}));
+
+    if (response.statusCode == 200) {
+      log('User $userId blocked successfully');
+    } else {
+      log('Error blocking user: ${response.statusCode}');
+      throw Exception('Failed to block user');
+    }
+  }
+
+  Future<void> reportUser({required int userId, required String reason}) async {
+    final response = await _client.post(Uri.parse("$BASE_URL/user/report"), body: json.encode({"reported_user_id": userId, "reason": reason}));
+
+    if (response.statusCode == 200) {
+      log('User $userId reported successfully');
+    } else {
+      log('Error reporting user: ${response.statusCode}');
+      throw Exception('Failed to report user');
+    }
+  }
 }

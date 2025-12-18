@@ -6,6 +6,7 @@ import 'package:bloc/bloc.dart';
 import 'package:isar/isar.dart';
 import 'package:linkup/data/enums/message_type_enum.dart';
 import 'package:linkup/data/http_services/match_http_services/match_http_services.dart';
+import 'package:linkup/data/http_services/user_http_services/user_http_services.dart';
 import 'package:linkup/data/isar_classes/chats_table.dart';
 import 'package:linkup/data/models/chat_models/message_model.dart';
 import 'package:linkup/data/models/chats_connection_model.dart';
@@ -136,15 +137,20 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
 
         _socketInit();
 
-        emit(
-          ConnectionsLoaded(
-            matches: connections['matches'] as List<MatchesConnectionModel>,
-            chats: connections['chats'] as List<ChatsConnectionModel>,
-          ),
-        );
+        emit(ConnectionsLoaded(matches: connections['matches'] as List<MatchesConnectionModel>, chats: connections['chats'] as List<ChatsConnectionModel>));
       } on Exception catch (e, stackTrace) {
         log('Error loading connections: $e', stackTrace: stackTrace, name: _logTag);
         emit(ConnectionsError());
+      }
+    });
+
+    on<ReportUserEvent>((event, emit) async {
+      try {
+        await UserHttpServices().reportUser(userId: event.userIdToReport, reason: event.reason);
+        log("User reported successfully", name: _logTag);
+      } catch (e) {
+        log("Error reporting user: $e", name: _logTag);
+        // You could emit a specific error state here if you wanted to show a snackbar from the bloc listener
       }
     });
 
@@ -162,11 +168,7 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
         if (index != -1) {
           final oldChat = updatedChats[index];
 
-          updatedChats[index] = oldChat.copyWith(
-            message: liveChatData.message,
-            unseenCounter: oldChat.unseenCounter + liveChatData.unseenCounterIncBy,
-            messageType: liveChatData.messageType,
-          );
+          updatedChats[index] = oldChat.copyWith(message: liveChatData.message, unseenCounter: oldChat.unseenCounter + liveChatData.unseenCounterIncBy, messageType: liveChatData.messageType);
 
           if (event.liveChatData!.changeOrder) {
             final latestChat = updatedChats.removeAt(index);
@@ -191,6 +193,38 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
         final oldChat = updatedChats[index];
         updatedChats[index] = oldChat.copyWith(unseenCounter: event.decrementCounterTo);
         emit(currentState.copyWith(chats: updatedChats));
+      }
+    });
+
+    on<BlockUserEvent>((event, emit) async {
+      final currentState = state;
+      // Optimistic Update: Immediately remove from UI
+      if (currentState is ConnectionsLoaded) {
+        final updatedChats = List<ChatsConnectionModel>.from(currentState.chats);
+        final updatedMatches = List<MatchesConnectionModel>.from(currentState.matches);
+
+        // Remove from chats if chatRoomId matches OR if the user is the participant
+        // (Assuming you have access to participant ID in ChatsConnectionModel, otherwise use chatRoomId)
+        if (event.chatRoomId != null) {
+          updatedChats.removeWhere((chat) => chat.chatRoomId == event.chatRoomId);
+        }
+
+        // Remove from matches
+        updatedMatches.removeWhere((match) => match.id == event.userIdToBlock);
+        emit(currentState.copyWith(chats: updatedChats, matches: updatedMatches));
+      }
+
+      try {
+        // Call API
+        await UserHttpServices().blockUser(userId: event.userIdToBlock);
+
+        // Optionally reload fresh data from server to ensure sync
+        // add(LoadConnectionsEvent(showLoading: false));
+      } catch (e) {
+        log("Error blocking user: $e", name: _logTag);
+        // Ideally, revert state or show error toast here
+        // For now, we force a reload to get back strictly correct data
+        add(LoadConnectionsEvent(showLoading: false));
       }
     });
   }

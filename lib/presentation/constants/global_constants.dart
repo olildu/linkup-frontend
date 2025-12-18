@@ -2,16 +2,16 @@
 
 import 'dart:io';
 
-final bool prod = false;
+final bool prod = true;
 
 String getBASEURL() {
   if (prod) {
-    return 'linkup-backend.olildu.dpdns.org';
+    return 'linkup.olildu.dpdns.org/api/v1';
   }
   if (Platform.isAndroid) {
-    return '10.0.2.2:8002';
+    return '192.168.123.32:8002/api/v1';
   } else {
-    return 'localhost:8002';
+    return 'localhost:8002/api/v1';
   }
 }
 

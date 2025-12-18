@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -46,10 +47,13 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   void initState() {
     super.initState();
-    _emailController.text = 'ebinsanthosh06@gmail.com';
-    _passwordController.text = 'OOMBmyrefc!12';
-    _confirmPasswordController.text = 'OOMBmyrefc!12';
-    _otpController.text = '123456';
+
+    if (kDebugMode) {
+      _emailController.text = 'ebinsanthosh06@gmail.com';
+      _passwordController.text = 'OOMBmyrefc!12';
+      _confirmPasswordController.text = 'OOMBmyrefc!12';
+      _otpController.text = '123456';
+    }
 
     _validateEmail();
 
@@ -74,7 +78,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 Navigator.pop(context, true);
               }
               if (state is OTPVerified) {
-                widget.tabHeightChange(2);
+                widget.tabHeightChange(0);
               }
             },
             builder: (context, state) {

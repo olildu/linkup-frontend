@@ -53,6 +53,7 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     // Message Socket Subscription
     _messageSocketSubscription?.cancel();
     _messageSocketSubscription = ChatSocketServices.chatsMessageStream.listen((raw) {
+      log("Raw socket data: $raw", name: _logTag); // Debug log
       final data = jsonDecode(raw);
       if (data["type"] == "chats") {
         switch (data["chats_type"]) {
@@ -97,17 +98,15 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
 
   // Event Functions
   Future<void> _onStartChats(StartChatsEvent event, Emitter<ChatsState> emit) async {
-    if (!event.showLoading) emit(ChatsLoading()); // If showLoading false then don't emit loading
+    if (!event.showLoading) emit(ChatsLoading());
     try {
       late List<Message> messages = [];
 
       _startSocketListeners();
 
       try {
-        // Try to fetch from internet
         messages = await ChatHttpServices().fetchChatMessages(chatRoomId: chatRoomId);
       } catch (httpError) {
-        // Fails then refer to cache for the last 20 messages
         log("No internet reffering to cache", name: _logTag);
         messages = (await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).findAll()).map((e) => e.toMessage()).toList();
       }
@@ -116,8 +115,8 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
         List first20Messages = (messages.sublist(
           0,
           messages.length >= 20 ? 20 : messages.length,
-        )); // We are interested to store only first 20 messages
-        await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).deleteAll(); // Delete all messages from the current ChatRoomID
+        ));
+        await isar.messageTables.filter().chatRoomIdEqualTo(chatRoomId).deleteAll();
 
         for (Message message in first20Messages) {
           await isar.messageTables.put(MessageTable.fromMessage(message));
@@ -167,9 +166,12 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
       final currentState = state;
 
       if (currentState is ChatsLoaded) {
+        // Log ID check for debugging
+        log("Checking Msg: From ${message.from_} vs ChatUser $currentChatUserId | To ${message.to} vs Me $currentUserId", name: _logTag);
+        
         if (message.to == currentUserId && message.from_ == currentChatUserId) {
           final updatedMessages = List<Message>.from(currentState.messages)..add(message);
-          log("Message received", name: _logTag);
+          log("Message accepted and added to list", name: _logTag);
           emit(currentState.copyWith(messages: updatedMessages, isTyping: false));
         }
       } else {
@@ -231,21 +233,25 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     }
   }
 
+  // --- FIXED TYPING EVENT LOGIC ---
   void _onTypingEvent(TypingEvent event, Emitter<ChatsState> emit) {
     try {
       final currentState = state;
-      final message = Message.fromJson(event.message);
+      // Do NOT try to parse as Message object, use the Map directly
+      final data = event.message; 
+      final fromUserId = data['from_'] as int;
 
-      if (message.from_ != currentChatUserId) return;
+      if (fromUserId != currentChatUserId) return;
 
       if (currentState is ChatsLoaded) {
-        emit(currentState.copyWith(isTyping: true, typingUserId: message.from_));
+        emit(currentState.copyWith(isTyping: true, typingUserId: fromUserId));
+        
         _typingKillTimer?.cancel();
         _typingKillTimer = Timer(const Duration(seconds: 3), () {
-          add(TypingTimeoutEvent(userId: message.from_));
+          add(TypingTimeoutEvent(userId: fromUserId));
         });
 
-        log("Typing event from ${message.from_}", name: _logTag);
+        log("Typing event from $fromUserId processed", name: _logTag);
       }
     } catch (e, stackTrace) {
       log("TypingEvent error", error: e, stackTrace: stackTrace, name: _logTag);
@@ -321,7 +327,6 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
 
     emit(currentState.copyWith(isFetchingPaginatedMessages: true));
 
-    // Fetch older messages using the last known message ID
     final olderMessages = await ChatHttpServices().fetchPaginatedChatMessages(
       chatRoomId: chatRoomId,
       lastMessageId: event.lastMessageID,
@@ -329,12 +334,6 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
     );
 
     final currentMessages = currentState.messages;
-
-    for (var x in olderMessages) {
-      log("Fetched older message ID: ${x.message}, ${x.id}", name: _logTag);
-    }
-
-    // Prepend older messages to current messages
     final updatedMessages = [...olderMessages, ...currentMessages];
 
     emit(currentState.copyWith(messages: updatedMessages, isFetchingPaginatedMessages: true));

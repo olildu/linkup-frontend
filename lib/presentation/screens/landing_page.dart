@@ -68,7 +68,9 @@ class _LandingPageState extends State<LandingPage> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(child: Image.asset('assets/images/landing_page_image.jpg', width: 400.w, height: 400.h, fit: BoxFit.cover)),
+          Positioned.fill(
+            child: Image.asset('assets/images/landing_page_image.jpg', width: 400.w, height: 400.h, fit: BoxFit.cover),
+          ),
 
           Padding(
             padding: EdgeInsets.only(top: 50.h, left: 20.w, right: 20.w, bottom: 20.h),
@@ -76,7 +78,10 @@ class _LandingPageState extends State<LandingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                Text('linkup', style: TextStyle(fontSize: 40.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(
+                  'linkup',
+                  style: TextStyle(fontSize: 40.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
 
                 Gap(5.h),
 
@@ -84,7 +89,10 @@ class _LandingPageState extends State<LandingPage> {
 
                 Spacer(),
 
-                Text('linkup with your crowd', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w500, color: Colors.white)),
+                Text(
+                  'linkup with your crowd',
+                  style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w500, color: Colors.white),
+                ),
 
                 Gap(20.h),
 

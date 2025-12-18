@@ -81,7 +81,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> with SingleTickerProv
                       create: (context) => OtpBloc(),
                       child: SignUpPage(
                         tabHeightChange: (int index) {
-                          widget.onTabChange(2);
+                          widget.onTabChange(index);
                         },
                       ),
                     ),
