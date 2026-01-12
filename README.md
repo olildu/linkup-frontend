@@ -82,3 +82,16 @@ cd linkup-frontend
 flutter pub get 
 flutter run 
 ```
+
+## 📱 Live Beta Testing
+
+The application is currently in active testing. You can try the live build without setting up the backend locally.
+
+**1. Download the Build:**
+You can find the latest stable APK/IPA in the [assets folder](./assets/builds/) (or your specific path).
+
+**2. Test Credentials:**
+Use the following pre-configured account to explore the real-time matching and chat features:
+
+> 📧 **Email:** `tester@linkup.olildu.dpdns.org`  
+> 🔑 **Password:** `TESTERcreds#40`
