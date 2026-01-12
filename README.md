@@ -88,7 +88,7 @@ flutter run
 The application is currently in active testing. You can try the live build without setting up the backend locally.
 
 **1. Download the Build:**
-You can find the latest stable APK/IPA in the [assets folder](./assets/builds/) (or your specific path).
+Get the latest stable version here: [**Download LinkUp Beta (v1.0.0-beta)**](https://github.com/olildu/linkup-frontend/releases/download/v1.0.0-beta/app-release.apk)
 
 **2. Test Credentials:**
 Use the following pre-configured account to explore the real-time matching and chat features:
