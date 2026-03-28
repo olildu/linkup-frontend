@@ -91,8 +91,7 @@ class AuthHttpServices {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        final error = jsonDecode(response.body);
-        throw Exception("OTP verification failed: ${error['detail'] ?? 'Unknown error'}");
+        throw Exception(_client.handleResponse(response));
       }
     } on http.ClientException catch (e) {
       log('HTTP ClientException during verifyEmailOTP: $e', name: _logTag);
@@ -109,9 +108,8 @@ class AuthHttpServices {
   /// Returns a `Map<String, dynamic>` containing the response body on success,
   /// or throws an exception if the request fails.
   static Future<bool> completeSignupCreds({required String emailHash, required String password}) async {
+    final response = await http.post(Uri.parse("$BASE_URL/signup"), headers: {'Content-Type': 'application/json'}, body: jsonEncode({"email_hash": emailHash, "password": password}));
     try {
-      final response = await http.post(Uri.parse("$BASE_URL/signup"), headers: {'Content-Type': 'application/json'}, body: jsonEncode({"email_hash": emailHash, "password": password}));
-
       log('Signup response status: ${response.statusCode}', name: _logTag);
       log('Signup response body: ${response.body}', name: _logTag);
 
@@ -140,7 +138,7 @@ class AuthHttpServices {
       throw Exception('Network error during signup');
     } catch (e, stackTrace) {
       log('Unexpected error during completeSignup: $e', name: _logTag, stackTrace: stackTrace);
-      throw Exception('Unexpected error during signup');
+      throw Exception(_client.handleResponse(response));
     }
   }
 

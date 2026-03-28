@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/logic/bloc/auth/auth_bloc.dart';
 import 'package:linkup/logic/bloc/otp/otp_bloc.dart';
 import 'package:linkup/presentation/screens/login_page.dart';
 import 'package:linkup/presentation/screens/signup_page.dart';
@@ -73,19 +74,18 @@ class _LoginSignupPageState extends State<LoginSignupPage> with SingleTickerProv
               Gap(32.h),
 
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    LoginPage(),
-                    BlocProvider(
-                      create: (context) => OtpBloc(),
-                      child: SignUpPage(
-                        tabHeightChange: (int index) {
-                          widget.onTabChange(index);
-                        },
+                child: BlocProvider(
+                  create: (context) => AuthBloc(),
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      const LoginPage(),
+                      BlocProvider(
+                        create: (context) => OtpBloc(),
+                        child: SignUpPage(tabHeightChange: (i) => widget.onTabChange(i)),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],

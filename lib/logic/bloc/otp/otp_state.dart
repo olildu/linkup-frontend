@@ -1,27 +1,16 @@
 part of 'otp_bloc.dart';
 
 @immutable
-sealed class OtpBlocState {}
+sealed class OtpState {}
 
-final class OtpBlocInitial extends OtpBlocState {}
-
-// Email OTP Sending 
-final class OtpSentLoading extends OtpBlocState {}
-
-final class OtpSent extends OtpBlocState {}
-
-final class OtpSentFailed extends OtpBlocState {}
-
-// OTP Verification
-final class OTPVerified extends OtpBlocState {}
-
-final class OTPVerificationFailed extends OtpBlocState {}
-
-final class OTPVerificationLoading extends OtpBlocState {}
-
-// Password Creation
-final class OTPPasswordCreated extends OtpBlocState {}
-
-final class OTPPasswordFailed extends OtpBlocState {}
-
-final class OTPPasswordLoading extends OtpBlocState {}
+final class OtpInitial extends OtpState {}
+final class OtpLoading extends OtpState {}
+final class OtpSent extends OtpState {}
+final class OtpVerified extends OtpState {
+  final String emailHash;
+  OtpVerified({required this.emailHash});
+}
+final class OtpFailure extends OtpState {
+  final String message;
+  OtpFailure({required this.message});
+}

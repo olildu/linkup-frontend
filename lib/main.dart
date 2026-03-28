@@ -23,7 +23,6 @@ import 'package:linkup/logic/cubit/theme/theme_cubit.dart';
 import 'package:linkup/presentation/constants/colors.dart';
 import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/logic/provider/data_validator_provider.dart';
-import 'package:linkup/presentation/utils/show_error_toast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,11 +89,11 @@ class MyApp extends StatelessWidget {
             themeMode: themeMode,
             home: BlocListener<ConnectivityCubit, ConnectivityCubitState>(
               listener: (context, state) {
-                if (state is ConnectivityDisconnected) {
-                  showToast(context: context, message: 'No internet connection', backgroundColor: Colors.red, icon: Icons.wifi_off);
-                } else if (state is ConnectivityConnected) {
-                  showToast(context: context, message: 'Back online', backgroundColor: Colors.green, icon: Icons.wifi);
-                }
+                // if (state is ConnectivityDisconnected) {
+                //   showToast(context: context, message: 'No internet connection', backgroundColor: Colors.red, icon: Icons.wifi_off);
+                // } else if (state is ConnectivityConnected) {
+                //   showToast(context: context, message: 'Back online', backgroundColor: Colors.green, icon: Icons.wifi);
+                // }
               },
               child: const LoadingScreenPostLogin(),
             ),

@@ -41,6 +41,9 @@ class _LandingPageState extends State<LandingPage> {
                       case 1:
                         newHeight = 0.37;
                         break;
+                      case 2:
+                        newHeight = 0.65;
+                        break;
                       default:
                         newHeight = 0.5;
                     }

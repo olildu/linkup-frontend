@@ -11,7 +11,6 @@ void main() {
       // 1. Arrange (Expected Values)
       const expectedBrightness = Brightness.light;
       const expectedBackground = AppColors.lightBackground;
-      const expectedPrimaryColor = AppColors.primary;
 
       // 2. Act: Access the static getter to force initialization
       final theme = AppTheme.lightTheme; // This executes lines 19, 22, 28, 31, 37

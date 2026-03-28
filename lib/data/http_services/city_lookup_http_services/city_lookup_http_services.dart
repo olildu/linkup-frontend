@@ -17,7 +17,7 @@ class CityLookupHttpServices {
         Uri.parse("$BASE_URL/locations/india/search/$query"),
         headers: {'Content-Type': 'application/json'},
       );
-
+  
       log('City search response status: ${response.statusCode}', name: _logTag);
       log('City search response body: ${response.body}', name: _logTag);
 

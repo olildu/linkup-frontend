@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:linkup/presentation/components/chat_page/minor_event_widgets.dart';
 import 'package:linkup/presentation/components/chat_page/event_intro_animation.dart';
-import 'package:octo_image/octo_image.dart'; // Needed for type checking
 import '../../../test_helper.dart';
 
 void main() {

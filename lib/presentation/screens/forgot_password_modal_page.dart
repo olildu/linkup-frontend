@@ -1,15 +1,16 @@
-// lib/presentation/screens/forgot_password_modal_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:linkup/data/enums/otp_subject_enum.dart';
+import 'package:linkup/logic/bloc/auth/auth_bloc.dart';
 import 'package:linkup/logic/bloc/otp/otp_bloc.dart';
+import 'package:linkup/presentation/components/common/text_widget_builder.dart';
 import 'package:linkup/presentation/components/login/text_input_field.dart';
 import 'package:linkup/presentation/components/login/otp_input_field.dart';
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
 import 'package:linkup/presentation/constants/colors.dart';
+import 'package:linkup/presentation/utils/show_error_toast.dart';
 
 class ForgotPasswordModalPage extends StatefulWidget {
   final Function(String) tabHeightChange;
@@ -27,29 +28,29 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  late OtpBloc _otpBloc;
-
+  String _emailHash = "";
   bool _isEmailValid = false;
-  bool _isPasswordValid = false;
-  bool _isConfirmPasswordValid = false;
-  bool _hasError = false;
+  bool _isPasswordMatched = false;
 
-  // Added state variables for password visibility
-  bool _obscureNewPassword = true;
-  bool _obscureConfirmPassword = true;
+  // Password requirement states
+  bool _hasUppercase = false;
+  bool _hasLowercase = false;
+  bool _hasNumber = false;
+  bool _hasSpecialChar = false;
+  bool _hasMinLength = false;
+
+  // Obscure toggle same as Signup
+  bool _hidePassword = true;
 
   @override
   void initState() {
     super.initState();
-    _otpBloc = context.read<OtpBloc>();
-
     _emailController.addListener(_validateFields);
     _passwordController.addListener(_validateFields);
     _confirmPasswordController.addListener(_validateFields);
     _otpController.addListener(_validateFields);
 
-    _emailController.value = TextEditingValue(text: widget.filledEmail);
-
+    _emailController.text = widget.filledEmail;
     _validateFields();
   }
 
@@ -67,61 +68,34 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    final isEmailValidNow = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+    _isEmailValid = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
 
-    final isPasswordValidNow = RegExp(r'^(?=.*[A-Z]).{7,}$').hasMatch(password);
+    setState(() {
+      _hasUppercase = password.contains(RegExp(r'[A-Z]'));
+      _hasLowercase = password.contains(RegExp(r'[a-z]'));
+      _hasNumber = password.contains(RegExp(r'[0-9]'));
+      _hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+      _hasMinLength = password.length >= 8;
 
-    final isConfirmPasswordValidNow = isPasswordValidNow && (password == confirmPassword);
-
-    if (mounted) {
-      setState(() {
-        _isEmailValid = isEmailValidNow;
-        _isPasswordValid = isPasswordValidNow;
-        _isConfirmPasswordValid = isConfirmPasswordValidNow;
-      });
-    }
+      _isPasswordMatched = password.isNotEmpty && password == confirmPassword && _hasUppercase && _hasLowercase && _hasNumber && _hasSpecialChar && _hasMinLength;
+    });
   }
 
-  void _onEmailSubmitted() {
-    if (_isEmailValid) {
-      _otpBloc.add(SendOTPEvent(email: _emailController.text.trim()));
-      setState(() => _hasError = false);
-    }
-  }
-
-  void _onOTPSubmitted() {
-    if (_otpController.text.trim().length == 6) {
-      _otpBloc.add(VerifyOTPEvent(otp: int.parse(_otpController.text.trim()), email: _emailController.text.trim(), subject: EmailOTPSubject.forgotPassword));
-      setState(() => _hasError = false);
-    }
-  }
-
-  void _onPasswordSubmitted() {
-    if (_isPasswordValid && _isConfirmPasswordValid) {
-      _otpBloc.add(ResetPasswordSubmittedEvent(password: _passwordController.text.trim()));
-      setState(() => _hasError = false);
-    }
+  // Toggle method same as Signup
+  void _hideUnhidePassword() {
+    setState(() {
+      _hidePassword = !_hidePassword;
+    });
   }
 
   void _safeTabHeightChange(String tab) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        widget.tabHeightChange(tab);
-      }
+      if (mounted) widget.tabHeightChange(tab);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // FIX: Defer Navigator.pop to avoid calling setState/Navigator during build in the listener
-    void safeNavigatorPop(bool result) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          Navigator.pop(context, result);
-        }
-      });
-    }
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -131,15 +105,11 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Gap(10.h),
-
-              // Header with Back Button and Title
               Row(
                 children: [
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     borderRadius: BorderRadius.circular(24.r),
-                    splashColor: AppColors.lightText.withOpacity(0.25),
-                    highlightColor: AppColors.lightText.withOpacity(0.1),
                     child: Padding(
                       padding: EdgeInsets.all(8.r),
                       child: Icon(Icons.arrow_back_ios_new_rounded, size: 20.sp, color: AppColors.lightText),
@@ -152,36 +122,38 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
                   ),
                 ],
               ),
-
               Gap(30.h),
-
-              // Dynamic content based on OtpBlocState
               Expanded(
-                child: BlocConsumer<OtpBloc, OtpBlocState>(
-                  listener: (context, state) {
-                    if (state is OtpSentFailed || state is OTPVerificationFailed || state is OTPPasswordFailed) {
-                      setState(() => _hasError = true);
-                    } else if (state is OTPPasswordCreated) {
-                      safeNavigatorPop(true); // Use the safe pop function
-                    }
-
-                    if (state is OtpBlocInitial || state is OtpSentLoading || state is OtpSentFailed) {
-                      _safeTabHeightChange("email-entry");
-                    } else if (state is OtpSent || state is OTPVerificationLoading || state is OTPVerificationFailed) {
-                      _safeTabHeightChange("otp-entry");
-                    } else if (state is OTPVerified || state is OTPPasswordLoading || state is OTPPasswordCreated || state is OTPPasswordFailed) {
-                      _safeTabHeightChange("password-entry");
-                    }
-                  },
-                  builder: (context, state) {
-                    if (state is OtpBlocInitial || state is OtpSentLoading || state is OtpSentFailed) {
-                      return _buildEmailEntry(state);
-                    } else if (state is OtpSent || state is OTPVerificationLoading || state is OTPVerificationFailed) {
-                      return _buildOtpVerification(state);
-                    } else {
-                      return _buildPasswordEntry(state);
-                    }
-                  },
+                child: MultiBlocListener(
+                  listeners: [
+                    BlocListener<OtpBloc, OtpState>(
+                      listener: (context, state) {
+                        if (state is OtpSent) _safeTabHeightChange("otp-entry");
+                        if (state is OtpVerified) {
+                          _emailHash = state.emailHash;
+                          _safeTabHeightChange("password-entry");
+                        }
+                        if (state is OtpFailure) showToast(context: context, message: state.message);
+                      },
+                    ),
+                    BlocListener<AuthBloc, AuthState>(
+                      listener: (context, state) {
+                        if (state is AuthAuthenticated) Navigator.pop(context, true);
+                        if (state is AuthFailure) showToast(context: context, message: state.message);
+                      },
+                    ),
+                  ],
+                  child: BlocBuilder<OtpBloc, OtpState>(
+                    builder: (context, otpState) {
+                      if (otpState is OtpVerified) {
+                        return BlocBuilder<AuthBloc, AuthState>(builder: (context, authState) => _buildPasswordEntry(authState));
+                      } else if (otpState is OtpSent) {
+                        return _buildOtpVerification(otpState);
+                      } else {
+                        return _buildEmailEntry(otpState);
+                      }
+                    },
+                  ),
                 ),
               ),
             ],
@@ -191,100 +163,157 @@ class _ForgotPasswordModalPageState extends State<ForgotPasswordModalPage> with 
     );
   }
 
-  Widget _buildEmailEntry(OtpBlocState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextInputField(label: 'Email', hintText: 'Enter your registered email', controller: _emailController, hasError: _hasError || state is OtpSentFailed),
-        if (_hasError || state is OtpSentFailed)
-          Padding(
-            padding: EdgeInsets.only(top: 8.0.h, left: 5.w),
-            child: Text(
-              'Invalid email or failed to send OTP. Please check your email and try again.',
-              style: TextStyle(color: Colors.red, fontSize: 14.sp),
+  Widget _buildEmailEntry(OtpState state) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [TextInputField(label: 'Email', hintText: 'Enter your registered email', controller: _emailController, hasError: state is OtpFailure)],
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10.h),
+                    child: ButtonBuilder(
+                      width: double.infinity,
+                      height: 55.h,
+                      text: 'Send OTP',
+                      onPressed: () => context.read<OtpBloc>().add(SendOTPEvent(email: _emailController.text.trim())),
+                      isLoading: state is OtpLoading,
+                      isEnabled: _isEmailValid,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        Spacer(),
-        ButtonBuilder(width: double.infinity, height: 55.h, text: 'Send OTP', onPressed: _onEmailSubmitted, isLoading: state is OtpSentLoading, isEnabled: _isEmailValid),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildOtpVerification(OtpBlocState state) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        OtpInputField(label: 'OTP Code', hintText: '••••••', controller: _otpController, hasError: _hasError || state is OTPVerificationFailed),
-        if (_hasError || state is OTPVerificationFailed)
-          Padding(
-            padding: EdgeInsets.only(top: 8.0.h, left: 5.w),
-            child: Text(
-              'Invalid OTP. Please check your code and try again.',
-              style: TextStyle(color: Colors.red, fontSize: 14.sp),
+  Widget _buildOtpVerification(OtpState state) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [OtpInputField(label: 'OTP Code', hintText: '••••••', controller: _otpController, hasError: state is OtpFailure)],
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10.h),
+                    child: ButtonBuilder(
+                      width: double.infinity,
+                      height: 55.h,
+                      text: 'Verify OTP',
+                      onPressed: () =>
+                          context.read<OtpBloc>().add(VerifyOTPEvent(otp: int.parse(_otpController.text.trim()), email: _emailController.text.trim(), subject: EmailOTPSubject.forgotPassword)),
+                      isLoading: state is OtpLoading,
+                      isEnabled: _otpController.text.trim().length == 6,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        Spacer(),
-        ButtonBuilder(
-          width: double.infinity,
-          height: 55.h,
-          text: 'Verify OTP',
-          onPressed: _onOTPSubmitted,
-          isLoading: state is OTPVerificationLoading,
-          isEnabled: _otpController.text.trim().length == 6,
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildPasswordEntry(OtpBlocState state) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        TextInputField(
-          label: 'New Password',
-          hintText: 'Enter your new password',
-          obscureText: _obscureNewPassword, // Use state variable
-          controller: _passwordController,
-          hasError: _hasError || state is OTPPasswordFailed,
-          toggleObscure: () {
-            // Implement toggle callback
-            setState(() {
-              _obscureNewPassword = !_obscureNewPassword;
-            });
-          },
-        ),
-        Gap(24.h),
-        TextInputField(
-          label: 'Confirm New Password',
-          hintText: 'Re-enter your new password',
-          obscureText: _obscureConfirmPassword, // Use state variable
-          controller: _confirmPasswordController,
-          hasError: _hasError || state is OTPPasswordFailed,
-          toggleObscure: () {
-            // Implement toggle callback
-            setState(() {
-              _obscureConfirmPassword = !_obscureConfirmPassword;
-            });
-          },
-        ),
-        if ((_hasError || state is OTPPasswordFailed) && (_passwordController.text.isNotEmpty || _confirmPasswordController.text.isNotEmpty))
-          Padding(
-            padding: EdgeInsets.only(top: 8.0.h, left: 5.w),
-            child: Text(
-              'Passwords do not match or are too short (min 7 characters).',
-              style: TextStyle(color: Colors.red, fontSize: 14.sp),
+  Widget _buildPasswordEntry(AuthState state) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextInputField(
+                        label: 'New Password',
+                        hintText: 'Enter your new password',
+                        obscureText: _hidePassword,
+                        controller: _passwordController,
+                        hasError: state is AuthFailure,
+                        toggleObscure: () => _hideUnhidePassword(),
+                      ),
+                      Gap(10.h),
+                      TextInputField(
+                        label: 'Confirm New Password',
+                        hintText: 'Re-enter your new password',
+                        obscureText: _hidePassword,
+                        controller: _confirmPasswordController,
+                        hasError: state is AuthFailure,
+                        toggleObscure: () => _hideUnhidePassword(),
+                      ),
+                      Gap(20.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 5.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildRequirementItem("At least 8 characters", _hasMinLength),
+                            _buildRequirementItem("One uppercase letter", _hasUppercase),
+                            _buildRequirementItem("One lowercase letter", _hasLowercase),
+                            _buildRequirementItem("One number", _hasNumber),
+                            _buildRequirementItem("One special character (!@#\$%^&*(),.:{}|<>)", _hasSpecialChar),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10.h),
+                    child: ButtonBuilder(
+                      width: double.infinity,
+                      height: 55.h,
+                      text: 'Change Password',
+                      onPressed: () => context.read<AuthBloc>().add(AuthResetPasswordRequested(emailHash: _emailHash, password: _passwordController.text.trim())),
+                      isLoading: state is AuthLoading,
+                      isEnabled: _isPasswordMatched,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        Spacer(),
-        ButtonBuilder(
-          width: double.infinity,
-          height: 55.h,
-          text: 'Change Password',
-          onPressed: _onPasswordSubmitted,
-          isLoading: state is OTPPasswordLoading,
-          isEnabled: _isPasswordValid && _isConfirmPasswordValid,
-        ),
-      ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRequirementItem(String text, bool isMet) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2.h),
+      child: Row(
+        children: [
+          Icon(isMet ? Icons.check_circle : Icons.circle_outlined, color: isMet ? Colors.green : Colors.grey, size: 16.sp),
+          Gap(8.w),
+          Expanded(
+            child: CustomTextWidget(text, fontSize: 13, color: isMet ? Colors.green : Colors.grey[600], overflow: TextOverflow.visible),
+          ),
+        ],
+      ),
     );
   }
 }

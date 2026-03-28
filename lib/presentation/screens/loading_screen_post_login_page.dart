@@ -29,6 +29,8 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
 
     _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2));
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+
+    // Start the animation immediately
     _controller.forward();
 
     _postLoginBloc = context.read<PostLoginBloc>();
@@ -46,9 +48,10 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
       await _tokenServices.registerUserIdIfExists();
       _postLoginBloc.add(StartPostLoginEvent());
     } else {
+      // If no token exists, wait for animation to finish then go to Landing
       _controller.addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          navigateWithFade(context, LandingPage(), allowBack: false);
+          navigateWithFade(context, const LandingPage(), allowBack: false);
         }
       });
     }
@@ -62,22 +65,34 @@ class _LoadingScreenPostLoginState extends State<LoadingScreenPostLogin> with Si
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.black : Colors.white,
       body: BlocListener<PostLoginBloc, PostLoginState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is PostLoginLoaded) {
-            if (state.goToSignUpPage) {
-              navigateWithFade(context, BlocProvider(create: (context) => SignupBloc(), child: SingupFlowPage(initialIndex: -1)), allowBack: false);
-            } else {
-              navigateWithFade(context, MatchMakingPage(), allowBack: false);
+            // FIX: Wait for the animation controller to finish its 2-second duration
+            // even if the Bloc data loaded earlier.
+            await _controller.forward();
+
+            if (mounted) {
+              if (state.goToSignUpPage) {
+                navigateWithFade(context, BlocProvider(create: (context) => SignupBloc(), child: const SingupFlowPage(initialIndex: -1)), allowBack: false);
+              } else {
+                navigateWithFade(context, const MatchMakingPage(), allowBack: false);
+              }
             }
           } else if (state is PostLoginError) {
-            navigateWithFade(context, LandingPage(), allowBack: false);
+            await _controller.forward();
+            if (mounted) {
+              navigateWithFade(context, const LandingPage(), allowBack: false);
+            }
           }
         },
         child: Center(
           child: SizedBox(
             width: size,
             height: size,
-            child: FadeTransition(opacity: _animation, child: CustomPaint(size: Size(size, size), painter: DrawingPainter(_animation, isDarkMode ? Colors.white : Colors.black))),
+            child: FadeTransition(
+              opacity: _animation,
+              child: CustomPaint(size: Size(size, size), painter: DrawingPainter(_animation, isDarkMode ? Colors.white : Colors.black)),
+            ),
           ),
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:linkup/logic/utils/calculate_age.dart';
 import 'package:linkup/presentation/components/signup_page/divider_builder_component.dart';
 import 'package:linkup/presentation/components/signup_page/picker_builder_component.dart';
 import 'package:linkup/presentation/constants/colors.dart';
@@ -22,20 +23,14 @@ class _Debouncer {
 class DatePicker extends StatefulWidget {
   final void Function(DateTime date)? onChanged;
 
-  const DatePicker({
-    super.key,
-    this.onChanged,
-  });
+  const DatePicker({super.key, this.onChanged});
 
   @override
   DatePickerState createState() => DatePickerState();
 }
 
 class DatePickerState extends State<DatePicker> {
-  final List<String> months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
+  final List<String> months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   late Map<String, List<String>> monthDays;
   late List<String> years;
@@ -52,7 +47,6 @@ class DatePickerState extends State<DatePicker> {
   final _Debouncer _yearDebouncer = _Debouncer(milliseconds: 200);
 
   DateTime? _previousSelectedDate;
-
 
   DateTime get _maxAllowedDate {
     final currentDate = DateTime.now();
@@ -86,8 +80,8 @@ class DatePickerState extends State<DatePicker> {
     };
 
     selectedYearIndex = (years.length ~/ 2);
-    selectedMonthIndex = 5; 
-    selectedDayIndex = 14;  
+    selectedMonthIndex = 5;
+    selectedDayIndex = 14;
 
     _monthController = FixedExtentScrollController(initialItem: selectedMonthIndex);
     _dayController = FixedExtentScrollController(initialItem: selectedDayIndex);
@@ -96,17 +90,12 @@ class DatePickerState extends State<DatePicker> {
     _callOnChanged();
   }
 
-
   bool _isLeapYear(int year) {
     return (year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0);
   }
 
   void _callOnChanged() {
-    final selectedDate = DateTime(
-      int.parse(years[selectedYearIndex]),
-      selectedMonthIndex + 1,
-      selectedDayIndex + 1,
-    );
+    final selectedDate = DateTime(int.parse(years[selectedYearIndex]), selectedMonthIndex + 1, selectedDayIndex + 1);
 
     if (_previousSelectedDate != selectedDate) {
       _previousSelectedDate = selectedDate;
@@ -116,13 +105,8 @@ class DatePickerState extends State<DatePicker> {
     }
   }
 
-
   void _validateAndCorrectDate() {
-    final selectedDate = DateTime(
-      int.parse(years[selectedYearIndex]),
-      selectedMonthIndex + 1,
-      selectedDayIndex + 1,
-    );
+    final selectedDate = DateTime(int.parse(years[selectedYearIndex]), selectedMonthIndex + 1, selectedDayIndex + 1);
 
     if (selectedDate.isAfter(_maxAllowedDate)) {
       selectedYearIndex = years.indexOf(_maxAllowedDate.year.toString());
@@ -153,22 +137,29 @@ class DatePickerState extends State<DatePicker> {
 
   List<String> _getAllowedDays(String month, int year) {
     var days = monthDays[month]!;
-    
-    if (year == _maxAllowedDate.year && 
-        months.indexOf(month) == _maxAllowedDate.month - 1) {
+
+    if (year == _maxAllowedDate.year && months.indexOf(month) == _maxAllowedDate.month - 1) {
       days = days.sublist(0, _maxAllowedDate.day);
     }
-    
+
     return days;
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentDate = DateTime.now();
     final selectedYear = int.parse(years[selectedYearIndex]);
     final allowedMonths = _getAllowedMonths(selectedYear);
     final selectedMonth = allowedMonths[selectedMonthIndex];
     final daysInMonth = _getAllowedDays(selectedMonth, selectedYear);
+
+    final selectedDate = DateTime(selectedYear, selectedMonthIndex + 1, selectedDayIndex + 1);
+
+    final exactAge = calculateAge(selectedDate);
+
+    if (selectedMonthIndex >= allowedMonths.length) {
+      selectedMonthIndex = allowedMonths.length - 1;
+      _monthController.jumpToItem(selectedMonthIndex);
+    }
 
     if (selectedMonthIndex >= allowedMonths.length) {
       selectedMonthIndex = allowedMonths.length - 1;
@@ -241,10 +232,7 @@ class DatePickerState extends State<DatePicker> {
                           final year = int.parse(years[index]);
                           if (allowedMonths[selectedMonthIndex] == 'February') {
                             final isLeap = _isLeapYear(year);
-                            monthDays['February'] = List.generate(
-                              isLeap ? 29 : 28,
-                              (i) => (i + 1).toString(),
-                            );
+                            monthDays['February'] = List.generate(isLeap ? 29 : 28, (i) => (i + 1).toString());
                           }
                           _validateAndCorrectDate();
                         });
@@ -259,11 +247,7 @@ class DatePickerState extends State<DatePicker> {
 
         Gap(20.h),
 
-        buildDivider(
-          height: 1.h,
-          color: AppColors.notSelected,
-          borderRadius: BorderRadius.circular(1.5.r),
-        ),
+        buildDivider(height: 1.h, color: AppColors.notSelected, borderRadius: BorderRadius.circular(1.5.r)),
         Expanded(
           child: Container(
             height: 2.5.h,
@@ -272,27 +256,19 @@ class DatePickerState extends State<DatePicker> {
               child: Column(
                 children: [
                   Text(
-                    'Age ${currentDate.year - int.parse(years[selectedYearIndex])}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 26.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                    'Age $exactAge',
+                    style: GoogleFonts.poppins(fontSize: 26.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Gap(10.h),
                   Text(
                     "This cannot be changed",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.notSelected,
-                    ),
-                  )
+                    style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w400, color: AppColors.notSelected),
+                  ),
                 ],
               ),
             ),
           ),
-        )
+        ),
       ],
     );
   }

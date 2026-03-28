@@ -1,20 +1,20 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart'; // Added for kDebugMode
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:linkup/data/common_services/validation_utils.dart';
+import 'package:linkup/logic/bloc/auth/auth_bloc.dart';
 import 'package:linkup/logic/bloc/otp/otp_bloc.dart';
 import 'package:linkup/presentation/components/login/text_input_field.dart';
 import 'package:linkup/presentation/components/signup_page/button_builder.dart';
-import 'package:linkup/data/http_services/auth_http_services/auth_http_services.dart';
 import 'package:linkup/presentation/screens/forgot_password_modal_page.dart';
 import 'package:linkup/presentation/screens/loading_screen_post_login_page.dart';
 import 'package:linkup/presentation/utils/show_error_toast.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -22,26 +22,19 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _isFormValid = false;
-  bool _isLoading = false;
-  bool _hasError = false;
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void validateEmailPassword() {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    final isEmailValid = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-    final isPasswordValid = password.length >= 7;
-
+  void _validate() {
     setState(() {
-      _isFormValid = isEmailValid && isPasswordValid;
+      _isFormValid = ValidationUtils.validateEmail(_emailController.text) && ValidationUtils.validatePassword(_passwordController.text, isLogin: true);
     });
   }
 
+  // Restored: Forgot Password Popup Logic
   void _showForgotPopup() {
     double modalHeight = 0.35;
+    final authBloc = context.read<AuthBloc>();
 
     showModalBottomSheet(
       context: context,
@@ -52,25 +45,18 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, setModalState) {
             void onTabChange(String value) {
               double newHeight;
-
               switch (value) {
                 case "email-entry":
-                  newHeight = 0.35;
-                  break;
                 case "otp-entry":
                   newHeight = 0.35;
                   break;
                 case "password-entry":
-                  newHeight = 0.5;
+                  newHeight = 0.65;
                   break;
-
                 default:
                   newHeight = 0.35;
               }
-
-              setModalState(() {
-                modalHeight = newHeight;
-              });
+              setModalState(() => modalHeight = newHeight);
             }
 
             return ClipRRect(
@@ -78,14 +64,12 @@ class _LoginPageState extends State<LoginPage> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 100),
                 height: (MediaQuery.of(context).size.height * modalHeight) + MediaQuery.of(context).viewInsets.bottom,
-                child: BlocProvider(
-                  create: (context) => OtpBloc(),
-                  child: ForgotPasswordModalPage(
-                    tabHeightChange: (String value) {
-                      onTabChange(value);
-                    },
-                    filledEmail: _emailController.text,
-                  ),
+                child: MultiBlocProvider(
+                  providers: [
+                    BlocProvider(create: (context) => OtpBloc()),
+                    BlocProvider.value(value: authBloc), // Pass existing AuthBloc
+                  ],
+                  child: ForgotPasswordModalPage(tabHeightChange: onTabChange, filledEmail: _emailController.text),
                 ),
               ),
             );
@@ -95,108 +79,104 @@ class _LoginPageState extends State<LoginPage> {
     ).then((value) async {
       if (value is bool && value) {
         await Future.delayed(const Duration(milliseconds: 500));
-        Navigator.of(context).push(CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()));
+        if (mounted) {
+          Navigator.of(context).push(CupertinoPageRoute(builder: (context) => const LoadingScreenPostLogin()));
+        }
       }
     });
-  }
-
-  void _handleResponse(int result) {
-    switch (result) {
-      case 200:
-        Navigator.of(context).pop(true);
-        break;
-      case 400:
-        setState(() {
-          _hasError = true;
-        });
-
-        showToast(context: context, message: 'Invalid email or password');
-
-        break;
-      default:
-        setState(() {
-          _hasError = true;
-        });
-    }
-  }
-
-  void _loginLogic() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _hasError = false;
-      });
-      int result = await AuthHttpServices.login(_emailController.text.trim(), _passwordController.text);
-      _handleResponse(result);
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   @override
   void initState() {
     super.initState();
 
+    // Restored: Default Credentials for Debug Mode
     if (kDebugMode) {
-      _emailController.value = const TextEditingValue(text: 'ebinsanthosh06@gmail.com');
-      _passwordController.value = const TextEditingValue(text: 'OOMBmyrefc!12');
+      _emailController.text = 'ebinsanthosh06@gmail.com';
+      _passwordController.text = 'OOMBmyrefc!12';
     }
 
-    validateEmailPassword();
+    _validate();
+    _emailController.addListener(_validate);
+    _passwordController.addListener(_validate);
+  }
 
-    _emailController.addListener(validateEmailPassword);
-    _passwordController.addListener(validateEmailPassword);
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFafafafa),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextInputField(label: 'Email', hintText: 'Enter your email', controller: _emailController, hasError: _hasError),
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) Navigator.of(context).pop(true);
+        if (state is AuthFailure) showToast(context: context, message: state.message);
+      },
+      builder: (context, state) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Top Section: Inputs & Forgot Password
+                      Column(
+                        children: [
+                          TextInputField(label: 'Email', hintText: 'Enter your email', controller: _emailController, hasError: state is AuthFailure),
+                          Gap(24.h),
+                          TextInputField(
+                            label: 'Password',
+                            hintText: '••••••••',
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            hasError: state is AuthFailure,
+                            toggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                          Gap(16.h),
+                          // Restored: Forgot Password Button
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              TextButton(
+                                onPressed: _showForgotPopup,
+                                child: Text(
+                                  'Forgot Password ?',
+                                  style: TextStyle(fontSize: 14.sp, color: Colors.blue, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
 
-            Gap(24.h),
-
-            TextInputField(
-              label: 'Password',
-              hintText: '••••••••',
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              hasError: _hasError,
-              toggleObscure: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-            ),
-
-            Gap(16.h),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    // Open another modal which will overlap the outer login and signup
-                    _showForgotPopup();
-                  },
-                  child: Text(
-                    'Forgot Password ?',
-                    style: TextStyle(fontSize: 14.sp, color: Colors.blue, fontWeight: FontWeight.w500),
+                      // Bottom Section: Action Button
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 10.h),
+                        child: ButtonBuilder(
+                          width: double.infinity,
+                          text: 'Log In',
+                          onPressed: () {
+                            context.read<AuthBloc>().add(AuthLoginRequested(email: _emailController.text.trim(), password: _passwordController.text));
+                          },
+                          isEnabled: _isFormValid && state is! AuthLoading,
+                          isLoading: state is AuthLoading,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-
-            ButtonBuilder(width: double.infinity, height: 55.h, text: 'Log In', onPressed: _loginLogic, isEnabled: _isFormValid, isLoading: _isLoading),
-          ],
-        ),
-      ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -10,15 +10,7 @@ class TextInputField extends StatefulWidget {
   final VoidCallback? toggleObscure;
   final bool hasError;
 
-  const TextInputField({
-    super.key,
-    required this.label,
-    required this.hintText,
-    required this.controller,
-    this.obscureText = false,
-    this.toggleObscure,
-    this.hasError = false,
-  });
+  const TextInputField({super.key, required this.label, required this.hintText, required this.controller, this.obscureText = false, this.toggleObscure, this.hasError = false});
 
   @override
   State<TextInputField> createState() => _TextInputFieldState();
@@ -47,23 +39,28 @@ class _TextInputFieldState extends State<TextInputField> {
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
-            hintStyle: TextStyle(color: Colors.grey[600]),
+            hintStyle: TextStyle(color: const Color.fromARGB(255, 191, 191, 191)),
             filled: true,
             fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide(color: borderColor)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide(color: borderColor)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide(color: borderColor),
+            ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(color: widget.hasError ? Colors.red : Colors.blue),
             ),
             contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-            suffixIcon:
-                widget.toggleObscure != null
-                    ? IconButton(
-                      icon: Icon(widget.obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.grey[600]),
-                      onPressed: widget.toggleObscure,
-                    )
-                    : null,
+            suffixIcon: widget.toggleObscure != null
+                ? IconButton(
+                    icon: Icon(widget.obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.grey[600]),
+                    onPressed: widget.toggleObscure,
+                  )
+                : null,
           ),
         ),
       ],
