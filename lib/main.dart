@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -34,7 +35,7 @@ Future<void> main() async {
   final getIt = GetIt.instance;
 
   final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open([MessageTableSchema, ChatsTableSchema, UnsentMessagesTableSchema], directory: dir.path, inspector: true);
+  final isar = await Isar.open([MessageTableSchema, ChatsTableSchema, UnsentMessagesTableSchema], directory: dir.path, inspector: kDebugMode ? true : false);
 
   GetItRegisterer.registerValue<Isar>(value: isar);
   GetItRegisterer.registerValue<FlutterSecureStorage>(value: FlutterSecureStorage());
@@ -55,15 +56,14 @@ Future<void> main() async {
           BlocProvider(create: (_) => ConnectivityCubit(Connectivity())),
 
           BlocProvider(
-            create:
-                (context) => PostLoginBloc(
-                  matchesBloc: context.read<MatchesBloc>(),
-                  webSocketBloc: context.read<WebSocketBloc>(),
-                  chatSocketsBloc: context.read<ChatSocketsBloc>(),
-                  profileBloc: context.read<ProfileBloc>(),
-                  connectionsBloc: context.read<ConnectionsBloc>(),
-                  connectionsSocketBloc: context.read<ConnectionsSocketBloc>(),
-                ),
+            create: (context) => PostLoginBloc(
+              matchesBloc: context.read<MatchesBloc>(),
+              webSocketBloc: context.read<WebSocketBloc>(),
+              chatSocketsBloc: context.read<ChatSocketsBloc>(),
+              profileBloc: context.read<ProfileBloc>(),
+              connectionsBloc: context.read<ConnectionsBloc>(),
+              connectionsSocketBloc: context.read<ConnectionsSocketBloc>(),
+            ),
           ),
         ],
         child: const MyApp(),

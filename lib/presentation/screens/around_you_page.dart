@@ -30,7 +30,7 @@ class _AroundYouPageState extends State<AroundYouPage> {
 
             return CardSwiper(
               padding: EdgeInsets.zero,
-              numberOfCardsDisplayed: candidates.length,
+              numberOfCardsDisplayed: 3,
               cardsCount: candidates.length,
               isLoop: false,
               allowedSwipeDirection: AllowedSwipeDirection.symmetric(vertical: false, horizontal: true),

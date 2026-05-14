@@ -79,7 +79,7 @@ abstract class BaseSocketService {
       ).timeout(const Duration(seconds: 5));
 
       // Set ping interval directly on the raw socket
-      ws.pingInterval = const Duration(seconds: 1);
+      ws.pingInterval = const Duration(seconds: 6);
 
       // Wrap the raw socket in the channel
       _channel = IOWebSocketChannel(ws);
