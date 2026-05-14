@@ -547,6 +547,7 @@ class _ChatPageState extends State<ChatPage> {
                   sendMessage: _sendMessage,
                   handleMedia: _handleMedia,
                   removeReplyPayload: () => _replyPayloadSetter(null),
+                  userImageMetaData: widget.userImageMetaData,
                 ),
               ],
             );

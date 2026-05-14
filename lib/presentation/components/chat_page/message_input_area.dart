@@ -16,6 +16,7 @@ class MessageInputArea extends StatelessWidget {
   final Function() sendMessage;
   final Function(File) handleMedia;
   final Function removeReplyPayload;
+  final Map userImageMetaData;
 
   const MessageInputArea({
     super.key,
@@ -25,6 +26,7 @@ class MessageInputArea extends StatelessWidget {
     required this.removeReplyPayload,
     required this.sendMessage,
     required this.handleMedia,
+    required this.userImageMetaData,
   });
 
   @override
@@ -42,59 +44,67 @@ class MessageInputArea extends StatelessWidget {
           children: [
             replyPayload != null
                 ? Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-                  width: maxWidth,
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline, width: 2))),
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                    width: maxWidth,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline, width: 2)),
+                    ),
 
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(left: 5.w),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(left: 5.w),
 
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Replying to ${replyPayload?.userName}", overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w300)),
-                                  Text(
-                                    replyPayload!.message,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w300, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            SizedBox(
-                              width: 36.w,
-                              height: 36.h,
-                              child: IconButton(
-                                icon: Icon(Icons.close, size: 18.sp, color: Theme.of(context).colorScheme.onSurface),
-                                onPressed: () {
-                                  removeReplyPayload();
-                                },
-                                tooltip: 'Close reply',
-                                padding: EdgeInsets.zero,
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.outline,
-                                  shape: CircleBorder(),
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Replying to ${replyPayload?.userName}",
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w300),
+                                    ),
+                                    Text(
+                                      replyPayload!.message,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w300, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
+
+                              SizedBox(
+                                width: 36.w,
+                                height: 36.h,
+                                child: IconButton(
+                                  icon: Icon(Icons.close, size: 18.sp, color: Theme.of(context).colorScheme.onSurface),
+                                  onPressed: () {
+                                    removeReplyPayload();
+                                  },
+                                  tooltip: 'Close reply',
+                                  padding: EdgeInsets.zero,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.outline,
+                                    shape: CircleBorder(),
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                )
+                      ],
+                    ),
+                  )
                 : SizedBox.shrink(),
 
             Padding(
@@ -118,8 +128,14 @@ class MessageInputArea extends StatelessWidget {
                           fillColor: Theme.of(context).colorScheme.outline,
                           contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(25.r), borderSide: BorderSide.none),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(25.r), borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.2)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(25.r), borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.5)),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(25.r),
+                            borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(25.r),
+                            borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1.5),
+                          ),
                         ),
                       ),
                     ),
@@ -130,50 +146,58 @@ class MessageInputArea extends StatelessWidget {
                     switchInCurve: Curves.easeInOut,
                     switchOutCurve: Curves.easeInOut,
                     transitionBuilder: (Widget child, Animation<double> animation) {
-                      return ScaleTransition(scale: animation, child: FadeTransition(opacity: animation, child: child));
+                      return ScaleTransition(
+                        scale: animation,
+                        child: FadeTransition(opacity: animation, child: child),
+                      );
                     },
-                    child:
-                        isTyping
-                            ? Material(
-                              key: const ValueKey('send_button'),
-                              color: Theme.of(context).colorScheme.primary,
+                    child: isTyping
+                        ? Material(
+                            key: const ValueKey('send_button'),
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(25.r),
+                            child: InkWell(
                               borderRadius: BorderRadius.circular(25.r),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(25.r),
-                                onTap: sendMessage,
-                                child: Padding(padding: EdgeInsets.all(10.r), child: Icon(Icons.send_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 22.sp)),
-                              ),
-                            )
-                            : Container(
-                              decoration: BoxDecoration(color: Theme.of(context).colorScheme.outline, borderRadius: BorderRadius.circular(50.r)),
-                              child: Row(
-                                key: const ValueKey('camera_icons'),
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Hero(
-                                    tag: 'camera-hero',
-                                    child: IconButton(
-                                      icon: Icon(Icons.camera_alt_outlined, color: Theme.of(context).colorScheme.primary, size: 24.sp),
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .push(
-                                              PageRouteBuilder(
-                                                transitionDuration: Duration(milliseconds: 500),
-                                                pageBuilder: (_, __, ___) => BlocProvider(create: (context) => CameraBloc()..add(CameraInitEvent()), child: const MediaPickerPage()),
-                                              ),
-                                            )
-                                            .then((imageFile) {
-                                              if (imageFile is! File) return;
-                                              handleMedia(imageFile);
-                                            });
-                                      },
-                                      tooltip: 'Send image/video',
-                                      padding: EdgeInsets.all(10.r),
-                                    ),
-                                  ),
-                                ],
+                              onTap: sendMessage,
+                              child: Padding(
+                                padding: EdgeInsets.all(10.r),
+                                child: Icon(Icons.send_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 22.sp),
                               ),
                             ),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(color: Theme.of(context).colorScheme.outline, borderRadius: BorderRadius.circular(50.r)),
+                            child: Row(
+                              key: const ValueKey('camera_icons'),
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Hero(
+                                  tag: 'camera-hero',
+                                  child: IconButton(
+                                    icon: Icon(Icons.camera_alt_outlined, color: Theme.of(context).colorScheme.primary, size: 24.sp),
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .push(
+                                            PageRouteBuilder(
+                                              transitionDuration: Duration(milliseconds: 500),
+                                              pageBuilder: (_, __, ___) => BlocProvider(
+                                                create: (context) => CameraBloc()..add(CameraInitEvent()),
+                                                child: MediaPickerPage(userImageMetaData: userImageMetaData),
+                                              ),
+                                            ),
+                                          )
+                                          .then((imageFile) {
+                                            if (imageFile is! File) return;
+                                            handleMedia(imageFile);
+                                          });
+                                    },
+                                    tooltip: 'Send image/video',
+                                    padding: EdgeInsets.all(10.r),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                   ),
                 ],
               ),

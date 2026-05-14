@@ -1,14 +1,19 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:linkup/logic/bloc/camera/camera_bloc.dart';
+import 'package:linkup/presentation/utils/blurhash_util.dart';
+import 'package:octo_image/octo_image.dart';
 
 class MediaPickerPage extends StatelessWidget {
-  const MediaPickerPage({super.key});
+  final Map userImageMetaData;
+
+  const MediaPickerPage({super.key, required this.userImageMetaData});
 
   @override
   Widget build(BuildContext context) {
@@ -76,22 +81,6 @@ class MediaPickerPage extends StatelessWidget {
 
                                           Positioned(
                                             top: 16.h,
-                                            left: 16.w,
-                                            child: IconButton(
-                                              icon: Icon(Icons.close_rounded, color: Colors.white, size: 30.sp),
-                                              onPressed: () {
-                                                context.read<CameraBloc>().add(CameraInitEvent());
-                                              },
-                                              style: ButtonStyle(
-                                                backgroundColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.4)),
-                                                shape: WidgetStateProperty.all(const CircleBorder()),
-                                                padding: WidgetStateProperty.all(EdgeInsets.all(6.r)),
-                                              ),
-                                            ),
-                                          ),
-
-                                          Positioned(
-                                            top: 16.h,
                                             right: 16.w,
                                             child: IconButton(
                                               icon: Icon(Icons.download_rounded, color: Colors.white, size: 30.sp),
@@ -120,7 +109,13 @@ class MediaPickerPage extends StatelessWidget {
                             left: 20.w,
                             child: IconButton(
                               icon: Icon(Icons.close_rounded, color: Colors.white, size: 30.sp),
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () {
+                                if (state is MediaCaptureSuccess) {
+                                  context.read<CameraBloc>().add(CameraInitEvent());
+                                  return;
+                                }
+                                Navigator.pop(context);
+                              },
                             ),
                           ),
                         ],
@@ -151,8 +146,19 @@ class MediaPickerPage extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    CircleAvatar(radius: 13.r, backgroundImage: NetworkImage("https://picsum.photos/seed/86f4c11b-41c8-4c6f-b263-9a6e70e6aa2a/200/200")),
-
+                                    SizedBox(
+                                      width: 26.r,
+                                      height: 26.r,
+                                      child: ClipOval(
+                                        child: OctoImage(
+                                          image: CachedNetworkImageProvider(userImageMetaData['url']),
+                                          placeholderBuilder: blurHash(userImageMetaData['blurhash']).placeholderBuilder,
+                                          errorBuilder: OctoError.icon(color: Colors.red),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    
                                     Gap(8.w),
 
                                     Text(
