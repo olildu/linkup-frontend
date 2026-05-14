@@ -49,11 +49,20 @@ class _SetPreferencesPageState extends State<SetPreferencesPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    context.read<PreferencesBloc>().add(PreferencesLoadEvent());
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<PreferencesBloc, PreferencesState>(
       builder: (context, state) {
-        if (state is PreferencesLoading) {
-          return const Center(child: CircularProgressIndicator());
+        if (state is PreferencesInitial || state is PreferencesLoading) {
+          return Scaffold(
+            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+            body: const Center(child: CircularProgressIndicator()),
+          );
         } else if (state is PreferencesLoaded) {
           UserPreferenceModel userPreference = state.userPreference;
           return Scaffold(
@@ -65,12 +74,6 @@ class _SetPreferencesPageState extends State<SetPreferencesPage> {
               ),
               centerTitle: true,
               backgroundColor: Colors.transparent,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
             ),
 
             body: SafeArea(
@@ -103,12 +106,11 @@ class _SetPreferencesPageState extends State<SetPreferencesPage> {
                       OptionBuilder(
                         options: ["Open to smokers", "Prefer non-smokers", "Don't mind"],
                         textSize: 14.sp,
-                        currentOption:
-                            userPreference.smokingStatus == null
-                                ? "Don't mind"
-                                : userPreference.smokingStatus!
-                                ? "Open to smokers"
-                                : "Prefer non-smokers",
+                        currentOption: userPreference.smokingStatus == null
+                            ? "Don't mind"
+                            : userPreference.smokingStatus!
+                            ? "Open to smokers"
+                            : "Prefer non-smokers",
                         onChanged: (obj) {
                           bool? smokingStatus;
                           if (obj == "Open to smokers") {
@@ -132,12 +134,11 @@ class _SetPreferencesPageState extends State<SetPreferencesPage> {
 
                       OptionBuilder(
                         options: ["Open to drinkers", "Prefer non-drinkers", "Don't mind"],
-                        currentOption:
-                            userPreference.drinkingStatus == null
-                                ? "Don't mind"
-                                : userPreference.drinkingStatus!
-                                ? "Open to drinkers"
-                                : "Prefer non-drinkers",
+                        currentOption: userPreference.drinkingStatus == null
+                            ? "Don't mind"
+                            : userPreference.drinkingStatus!
+                            ? "Open to drinkers"
+                            : "Prefer non-drinkers",
                         textSize: 14.sp,
                         onChanged: (obj) {
                           bool? drinkingStatus;
