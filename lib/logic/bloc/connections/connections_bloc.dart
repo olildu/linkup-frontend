@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:isar/isar.dart';
+import 'package:get_it/get_it.dart';
 import 'package:linkup/data/enums/message_type_enum.dart';
 import 'package:linkup/data/http_services/match_http_services/match_http_services.dart';
 import 'package:linkup/data/http_services/user_http_services/user_http_services.dart';
@@ -25,10 +26,11 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
 
   final Map<int, Timer> _typingTimers = {};
   final Isar isar;
-
   final String _logTag = "ConnectionsBloc";
 
   void _socketInit() {
+    final int currentUserId = GetIt.instance<int>(instanceName: 'user_id');
+
     _chatSocketSubscription?.cancel();
     _chatSocketSubscription = ChatSocketServices.chatsMessageStream.listen((raw) {
       final currentState = state;
@@ -37,9 +39,16 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
       final data = jsonDecode(raw);
 
       if (data["type"] == "chats") {
-        if (data["chats_type"] == "message") {
-          final recievedMessage = Message.fromJson(data);
+        final recievedMessage = Message.fromJson(data);
 
+        final existingChat = currentState.chats.cast<ChatsConnectionModel?>().firstWhere((chat) => chat?.chatRoomId == recievedMessage.chatRoomId, orElse: () => null);
+
+        if (existingChat == null && (data["chats_type"] == "message" || data["chats_type"] == "typing")) {
+          add(LoadConnectionsEvent(showLoading: false));
+          return;
+        }
+
+        if (data["chats_type"] == "message") {
           if (_typingTimers.containsKey(recievedMessage.chatRoomId)) {
             _typingTimers[recievedMessage.chatRoomId]?.cancel();
             _typingTimers.remove(recievedMessage.chatRoomId);
@@ -51,16 +60,16 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
                 from_: recievedMessage.from_,
                 chatRoomId: recievedMessage.chatRoomId,
                 message: recievedMessage.message,
-                unseenCounterIncBy: 1,
+                unseenCounterIncBy: recievedMessage.from_ == currentUserId ? 0 : 1,
                 messageType: recievedMessage.media != null ? MessageType.image : MessageType.text,
                 changeOrder: true,
               ),
             ),
           );
         }
+
         if (data["chats_type"] == "typing") {
-          final recievedMessage = Message.fromJson(data);
-          final currentLastMessage = currentState.chats.firstWhere((chat) => chat.chatRoomId == recievedMessage.chatRoomId);
+          if (recievedMessage.from_ == currentUserId) return;
 
           add(
             ReloadChatConnectionsEvent(
@@ -75,16 +84,15 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
           );
 
           _typingTimers[recievedMessage.chatRoomId]?.cancel();
-
-          _typingTimers[recievedMessage.chatRoomId] = Timer(Duration(seconds: 3), () {
+          _typingTimers[recievedMessage.chatRoomId] = Timer(const Duration(seconds: 3), () {
             add(
               ReloadChatConnectionsEvent(
                 liveChatData: LiveChatDataModel(
                   from_: recievedMessage.from_,
                   chatRoomId: recievedMessage.chatRoomId,
-                  message: currentLastMessage.message ?? "",
+                  message: existingChat?.message ?? "",
                   unseenCounterIncBy: 0,
-                  messageType: currentLastMessage.messageType,
+                  messageType: existingChat?.messageType ?? MessageType.text,
                 ),
               ),
             );
@@ -96,11 +104,10 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
 
     _connectionsSocketSubscription?.cancel();
     _connectionsSocketSubscription = ConnectionsSocketService.connectionsMessageStream.listen((raw) {
-      final currentState = state;
-      if (currentState is! ConnectionsLoaded) return;
+      if (state is! ConnectionsLoaded) return;
       final data = jsonDecode(raw);
 
-      log("Data recieved $data", name: _logTag);
+      log("Data received $data", name: _logTag);
 
       if (data["type"] == "connections-reload") {
         add(LoadConnectionsEvent(showLoading: false));
@@ -110,14 +117,12 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
 
   ConnectionsBloc({required this.isar}) : super(ConnectionsInitial()) {
     on<LoadConnectionsEvent>((event, emit) async {
-      // Show loading only if showLoading is false
       if (event.showLoading != false) {
         emit(ConnectionsLoading());
       }
 
       try {
         Map<String, dynamic> connections = {};
-
         log('Loading connections...', name: _logTag);
 
         try {
@@ -147,10 +152,8 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
     on<ReportUserEvent>((event, emit) async {
       try {
         await UserHttpServices().reportUser(userId: event.userIdToReport, reason: event.reason);
-        log("User reported successfully", name: _logTag);
       } catch (e) {
         log("Error reporting user: $e", name: _logTag);
-        // You could emit a specific error state here if you wanted to show a snackbar from the bloc listener
       }
     });
 
@@ -161,16 +164,16 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
       final List<ChatsConnectionModel> currentChatState = currentState.chats;
       final LiveChatDataModel? liveChatData = event.liveChatData;
 
-      List<ChatsConnectionModel> updatedChats = List.from(currentChatState);
-
       if (liveChatData != null) {
+        List<ChatsConnectionModel> updatedChats = List.from(currentChatState);
         final index = updatedChats.indexWhere((chat) => chat.chatRoomId == liveChatData.chatRoomId);
+
         if (index != -1) {
           final oldChat = updatedChats[index];
 
           updatedChats[index] = oldChat.copyWith(message: liveChatData.message, unseenCounter: oldChat.unseenCounter + liveChatData.unseenCounterIncBy, messageType: liveChatData.messageType);
 
-          if (event.liveChatData!.changeOrder) {
+          if (liveChatData.changeOrder) {
             final latestChat = updatedChats.removeAt(index);
             updatedChats.insert(0, latestChat);
           }
@@ -182,9 +185,7 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
 
     on<MarkMessagesSeenEvent>((event, emit) {
       final currentState = state;
-      if (currentState is! ConnectionsLoaded) {
-        return;
-      }
+      if (currentState is! ConnectionsLoaded) return;
 
       final List<ChatsConnectionModel> updatedChats = List.from(currentState.chats);
       final index = updatedChats.indexWhere((chat) => chat.chatRoomId == event.chatRoomId);
@@ -198,32 +199,22 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
 
     on<BlockUserEvent>((event, emit) async {
       final currentState = state;
-      // Optimistic Update: Immediately remove from UI
       if (currentState is ConnectionsLoaded) {
         final updatedChats = List<ChatsConnectionModel>.from(currentState.chats);
         final updatedMatches = List<MatchesConnectionModel>.from(currentState.matches);
 
-        // Remove from chats if chatRoomId matches OR if the user is the participant
-        // (Assuming you have access to participant ID in ChatsConnectionModel, otherwise use chatRoomId)
         if (event.chatRoomId != null) {
           updatedChats.removeWhere((chat) => chat.chatRoomId == event.chatRoomId);
         }
-
-        // Remove from matches
         updatedMatches.removeWhere((match) => match.id == event.userIdToBlock);
+
         emit(currentState.copyWith(chats: updatedChats, matches: updatedMatches));
       }
 
       try {
-        // Call API
         await UserHttpServices().blockUser(userId: event.userIdToBlock);
-
-        // Optionally reload fresh data from server to ensure sync
-        // add(LoadConnectionsEvent(showLoading: false));
       } catch (e) {
         log("Error blocking user: $e", name: _logTag);
-        // Ideally, revert state or show error toast here
-        // For now, we force a reload to get back strictly correct data
         add(LoadConnectionsEvent(showLoading: false));
       }
     });
@@ -232,6 +223,10 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
   @override
   Future<void> close() {
     _chatSocketSubscription?.cancel();
+    _connectionsSocketSubscription?.cancel();
+    for (var timer in _typingTimers.values) {
+      timer.cancel();
+    }
     return super.close();
   }
 }
