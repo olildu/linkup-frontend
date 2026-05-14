@@ -38,11 +38,17 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        title: Text('Connections', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+        title: Text(
+          'Connections',
+          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface, size: 20.sp),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -98,7 +104,10 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
                       );
                     } else {
                       return Center(
-                        child: Text('No chats available', style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.onSurface)),
+                        child: Text(
+                          'No chats available',
+                          style: TextStyle(fontSize: 16.sp, color: Theme.of(context).colorScheme.onSurface),
+                        ),
                       );
                     }
                   },
@@ -140,23 +149,21 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
           Navigator.push(
             context,
             CupertinoPageRoute(
-              builder:
-                  (context) => BlocProvider(
-                    create:
-                        (context) => ChatsBloc(
-                          currentChatUserId: candidate.id,
-                          currentUserId: GetIt.instance<int>(instanceName: 'user_id'),
-                          chatRoomId: candidate.chatRoomId,
-                          isar: GetIt.instance<Isar>(),
-                        )..add(StartChatsEvent()),
-                    child: ChatPage(
-                      currentChatUserId: candidate.id,
-                      currentUserId: GetIt.instance<int>(instanceName: 'user_id'),
-                      userName: candidate.username,
-                      userImageMetaData: candidate.profilePictureMetaData,
-                      chatRoomId: candidate.chatRoomId,
-                    ),
-                  ),
+              builder: (context) => BlocProvider(
+                create: (context) => ChatsBloc(
+                  currentChatUserId: candidate.id,
+                  currentUserId: GetIt.instance<int>(instanceName: 'user_id'),
+                  chatRoomId: candidate.chatRoomId,
+                  isar: GetIt.instance<Isar>(),
+                )..add(StartChatsEvent()),
+                child: ChatPage(
+                  currentChatUserId: candidate.id,
+                  currentUserId: GetIt.instance<int>(instanceName: 'user_id'),
+                  userName: candidate.username,
+                  userImageMetaData: candidate.profilePictureMetaData,
+                  chatRoomId: candidate.chatRoomId,
+                ),
+              ),
             ),
           );
         },
@@ -176,17 +183,16 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
         ),
         subtitle: _buildMessageSubtitle(candidate),
-        trailing:
-            candidate.unseenCounter > 0
-                ? Container(
-                  padding: EdgeInsets.all(6.r),
-                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                  child: Text(
-                    candidate.unseenCounter > 9 ? '9+' : candidate.unseenCounter.toString(),
-                    style: TextStyle(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                )
-                : null,
+        trailing: candidate.unseenCounter > 0
+            ? Container(
+                padding: EdgeInsets.all(6.r),
+                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                child: Text(
+                  candidate.unseenCounter > 9 ? '9+' : candidate.unseenCounter.toString(),
+                  style: TextStyle(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -197,7 +203,10 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
         children: [
           Icon(Icons.image, size: 16.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
           SizedBox(width: 6.w),
-          Text('Image', style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+          Text(
+            'Image',
+            style: TextStyle(fontSize: 12.sp, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+          ),
         ],
       );
     } else {
@@ -221,7 +230,10 @@ class _YourPeoplePageState extends State<ConnectionsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+        Text(
+          title,
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+        ),
 
         Gap(10.h),
 

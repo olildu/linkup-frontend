@@ -40,13 +40,7 @@ class _MatchMakingPageState extends State<MatchMakingPage> with SingleTickerProv
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  if (Theme.of(context).brightness == Brightness.light) ...[
-                    Colors.white,
-                    Color.fromARGB(255, 215, 215, 215),
-                  ] else ...[
-                    Colors.black,
-                    Color.fromARGB(255, 31, 29, 29),
-                  ],
+                  if (Theme.of(context).brightness == Brightness.light) ...[Colors.white, Color.fromARGB(255, 215, 215, 215)] else ...[Colors.black, Color.fromARGB(255, 31, 29, 29)],
                 ],
               ),
             ),
@@ -65,21 +59,23 @@ class _MatchMakingPageState extends State<MatchMakingPage> with SingleTickerProv
                             onPressed: () {
                               Navigator.of(context).push(
                                 CupertinoPageRoute(
-                                  builder:
-                                      (context) => BlocProvider(
-                                        create: (context) => PreferencesBloc()..add(PreferencesLoadEvent()),
-                                        child: SetPreferencesPage(),
-                                      ),
+                                  builder: (context) => BlocProvider(create: (context) => PreferencesBloc(), child: SetPreferencesPage()),
                                 ),
                               );
                             },
                           ),
 
-                          IconButton(icon: Icon(Icons.flash_on_rounded, size: 28.sp), onPressed: () {}),
+                          IconButton(
+                            icon: Icon(Icons.flash_on_rounded, size: 28.sp),
+                            onPressed: () {},
+                          ),
                         ],
                       ),
 
-                      Text('linkup', style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                      Text(
+                        'linkup',
+                        style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                      ),
 
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -121,7 +117,10 @@ class _MatchMakingPageState extends State<MatchMakingPage> with SingleTickerProv
                                 insets: EdgeInsets.symmetric(horizontal: 30.0.w),
                               ),
                               physics: const NeverScrollableScrollPhysics(),
-                              tabs: const [Tab(text: 'Around You'), Tab(text: 'meet@8')],
+                              tabs: const [
+                                Tab(text: 'Around You'),
+                                Tab(text: 'meet@8'),
+                              ],
                             ),
                           ),
                           Gap(20.h),
@@ -130,7 +129,9 @@ class _MatchMakingPageState extends State<MatchMakingPage> with SingleTickerProv
                               physics: NeverScrollableScrollPhysics(),
                               children: [
                                 Center(child: AroundYouPage()),
-                                Center(child: BlocProvider(create: (context) => LobbyBloc(), child: MeetAt8Page())),
+                                Center(
+                                  child: BlocProvider(create: (context) => LobbyBloc(), child: MeetAt8Page()),
+                                ),
                               ],
                             ),
                           ),

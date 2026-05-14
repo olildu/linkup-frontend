@@ -69,7 +69,8 @@ class _MatchedPageState extends State<MatchedPage> {
           : AppBar(
               leading: IconButton(
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-                icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onSurface, size: 30.sp),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface, size: 20.sp),
+
                 onPressed: () {
                   context.read<MatchesBloc>().add(ClearMatchUserEvent());
                   Navigator.pop(context, true);

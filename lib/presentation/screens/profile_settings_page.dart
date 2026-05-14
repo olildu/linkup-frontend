@@ -87,7 +87,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface, size: 20.sp),
           onPressed: () {
             if (_updating) {
               showToast(context: context, message: "Please wait until the upload is complete.");
