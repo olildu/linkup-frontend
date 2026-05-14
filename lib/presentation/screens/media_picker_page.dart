@@ -34,87 +34,96 @@ class MediaPickerPage extends StatelessWidget {
                 child: Column(
                   children: [
                     Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30.r),
-                        child: Container(
-                          color: Colors.black,
-                          child: Builder(
-                            builder: (context) {
-                              if (state is CameraLoaded) {
-                                return AspectRatio(
-                                  aspectRatio: state.controller.value.aspectRatio,
-                                  child: FittedBox(
-                                    fit: BoxFit.cover,
-                                    child: SizedBox(
-                                      width: state.controller.value.previewSize!.height,
-                                      height: state.controller.value.previewSize!.width,
-                                      child: CameraPreview(state.controller),
-                                    ),
-                                  ),
-                                );
-                              } else if (state is CameraLoading) {
-                                return SizedBox.shrink();
-                              } else if (state is CameraError) {
-                                return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
-                              } else if (state is MediaCaptureSuccess) {
-                                return Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      child: AspectRatio(
-                                        aspectRatio: state.aspectRatio,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(30.r),
+                              child: Container(
+                                color: Colors.black,
+                                child: Builder(
+                                  builder: (context) {
+                                    if (state is CameraLoaded) {
+                                      return AspectRatio(
+                                        aspectRatio: state.controller.value.aspectRatio,
                                         child: FittedBox(
                                           fit: BoxFit.cover,
-                                          child: SizedBox(
-                                            width: state.height,
-                                            height: state.width,
-                                            child: Transform.flip(
-                                              flipX: state.takenFromFrontCamera ? true : false,
-                                              child: Image.file(File(state.mediaFile.path)),
+                                          child: SizedBox(width: state.controller.value.previewSize!.height, height: state.controller.value.previewSize!.width, child: CameraPreview(state.controller)),
+                                        ),
+                                      );
+                                    } else if (state is CameraLoading) {
+                                      return SizedBox.shrink();
+                                    } else if (state is CameraError) {
+                                      return Center(
+                                        child: Text(state.message, style: const TextStyle(color: Colors.red)),
+                                      );
+                                    } else if (state is MediaCaptureSuccess) {
+                                      return Stack(
+                                        children: [
+                                          Positioned.fill(
+                                            child: AspectRatio(
+                                              aspectRatio: state.aspectRatio,
+                                              child: FittedBox(
+                                                fit: BoxFit.cover,
+                                                child: SizedBox(
+                                                  width: state.height,
+                                                  height: state.width,
+                                                  child: Transform.flip(flipX: state.takenFromFrontCamera ? true : false, child: Image.file(File(state.mediaFile.path))),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ),
-                                    ),
 
-                                    Positioned(
-                                      top: 16.h,
-                                      left: 16.w,
-                                      child: IconButton(
-                                        icon: Icon(Icons.close_rounded, color: Colors.white, size: 30.sp),
-                                        onPressed: () {
-                                          context.read<CameraBloc>().add(CameraInitEvent());
-                                        },
-                                        style: ButtonStyle(
-                                          backgroundColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.4)),
-                                          shape: WidgetStateProperty.all(const CircleBorder()),
-                                          padding: WidgetStateProperty.all(EdgeInsets.all(6.r)),
-                                        ),
-                                      ),
-                                    ),
+                                          Positioned(
+                                            top: 16.h,
+                                            left: 16.w,
+                                            child: IconButton(
+                                              icon: Icon(Icons.close_rounded, color: Colors.white, size: 30.sp),
+                                              onPressed: () {
+                                                context.read<CameraBloc>().add(CameraInitEvent());
+                                              },
+                                              style: ButtonStyle(
+                                                backgroundColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.4)),
+                                                shape: WidgetStateProperty.all(const CircleBorder()),
+                                                padding: WidgetStateProperty.all(EdgeInsets.all(6.r)),
+                                              ),
+                                            ),
+                                          ),
 
-                                    Positioned(
-                                      top: 16.h,
-                                      right: 16.w,
-                                      child: IconButton(
-                                        icon: Icon(Icons.download_rounded, color: Colors.white, size: 30.sp),
-                                        onPressed: () async {
-                                          context.read<CameraBloc>().add(CameraSavePictureEvent(imageFile: state.mediaFile));
-                                        },
-                                        style: ButtonStyle(
-                                          backgroundColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.4)),
-                                          shape: WidgetStateProperty.all(const CircleBorder()),
-                                          padding: WidgetStateProperty.all(EdgeInsets.all(6.r)),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              } else {
-                                return const SizedBox.shrink();
-                              }
-                            },
+                                          Positioned(
+                                            top: 16.h,
+                                            right: 16.w,
+                                            child: IconButton(
+                                              icon: Icon(Icons.download_rounded, color: Colors.white, size: 30.sp),
+                                              onPressed: () async {
+                                                context.read<CameraBloc>().add(CameraSavePictureEvent(imageFile: state.mediaFile));
+                                              },
+                                              style: ButtonStyle(
+                                                backgroundColor: WidgetStateProperty.all(Colors.black.withValues(alpha: 0.4)),
+                                                shape: WidgetStateProperty.all(const CircleBorder()),
+                                                padding: WidgetStateProperty.all(EdgeInsets.all(6.r)),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    } else {
+                                      return const SizedBox.shrink();
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                          Positioned(
+                            top: 20.h,
+                            left: 20.w,
+                            child: IconButton(
+                              icon: Icon(Icons.close_rounded, color: Colors.white, size: 30.sp),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
@@ -142,14 +151,14 @@ class MediaPickerPage extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    CircleAvatar(
-                                      radius: 13.r,
-                                      backgroundImage: NetworkImage("https://picsum.photos/seed/86f4c11b-41c8-4c6f-b263-9a6e70e6aa2a/200/200"),
-                                    ),
+                                    CircleAvatar(radius: 13.r, backgroundImage: NetworkImage("https://picsum.photos/seed/86f4c11b-41c8-4c6f-b263-9a6e70e6aa2a/200/200")),
 
                                     Gap(8.w),
 
-                                    Text("Send", style: TextStyle(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text(
+                                      "Send",
+                                      style: TextStyle(fontWeight: FontWeight.w500, color: Colors.black),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -215,7 +224,11 @@ class MediaPickerPage extends StatelessWidget {
   Widget _buildIconButton({required IconData icon, required VoidCallback onPressed}) {
     return Container(
       decoration: BoxDecoration(color: Colors.grey.shade800, shape: BoxShape.circle),
-      child: IconButton(icon: Icon(icon, size: 30.sp, color: Colors.white), onPressed: onPressed, splashRadius: 28.r),
+      child: IconButton(
+        icon: Icon(icon, size: 30.sp, color: Colors.white),
+        onPressed: onPressed,
+        splashRadius: 28.r,
+      ),
     );
   }
 }
